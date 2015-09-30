@@ -1,6 +1,7 @@
 import bucket_generation as generator
 import key_generator as keys
 
+
 class BucketCollate(object):
 
     def __init__(self, bucket_generation, hash_method, store_function):
@@ -26,6 +27,8 @@ class BucketCollate(object):
 
 class MonthlyCollate(BucketCollate):
 
-    def __init__(self, start, end, store_function):
-        super(MonthlyCollate, self).__init__(generator.monthly(start, end), keys.monthly, store_function)
+    def __init__(self, start, end, default_value_generator, store_function):
+        super(MonthlyCollate, self).__init__(generator.monthly_buckets(start, end, default_value_generator),
+                                             keys.monthly,
+                                             store_function)
 
