@@ -1,3 +1,4 @@
+argparse==1.4.0
 dateutils==0.6.6
-python-dateutil==2.4.2
+numpy==1.9.3
 simplejson==3.8.0
