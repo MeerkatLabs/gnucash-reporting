@@ -53,3 +53,29 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
                 result.append(split)
 
     return result
+
+
+def account_walker(account_list, ignore_list=None, place_holders=False):
+    """
+    Generator method that will recursively walk the list of accounts provided, ignoring the accounts that are in the
+    ignore list.
+    :param account_list:
+    :param ignore_list:
+    :param place_holders:
+    :return:
+    """
+    if not ignore_list:
+        ignore_list = []
+
+    _account_list = [a for a in account_list]
+
+    while _account_list:
+        account_name = _account_list.pop()
+        if account_name in ignore_list:
+            continue
+
+        account = get_account(account_name)
+        if not account.GetPlaceholder() or place_holders:
+            yield account
+
+        _account_list += [a.get_full_name() for a in account.get_children()]

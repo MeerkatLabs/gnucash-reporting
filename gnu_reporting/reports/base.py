@@ -9,8 +9,12 @@ def register_plugin(report):
     reports[report.report_type] = report
 
 
-def get_report(report_type):
-    return reports.get(report_type, None)
+def get_report(_report_type):
+    report_type = reports.get(_report_type, None)
+    if not report_type:
+        raise AttributeError('Unknown report type: %s' % _report_type)
+
+    return report_type
 
 
 class Report(object):
