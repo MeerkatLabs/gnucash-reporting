@@ -4,11 +4,16 @@ import time
 from datetime import date
 
 gnucash_session = None
+currency_value = None
 
 
-def initialize(file_uri):
-    global gnucash_session
+def initialize(file_uri, account_with_currency=None):
+    global gnucash_session, currency_value
     gnucash_session = Session(file_uri, is_new=False)
+
+    if account_with_currency:
+        currency_value = get_account(account_with_currency).GetCommodity()
+
     return gnucash_session
 
 
@@ -79,3 +84,7 @@ def account_walker(account_list, ignore_list=None, place_holders=False):
             yield account
 
         _account_list += [a.get_full_name() for a in account.get_children()]
+
+
+def get_currency():
+    return currency_value

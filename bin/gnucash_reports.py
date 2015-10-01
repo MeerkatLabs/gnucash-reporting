@@ -27,7 +27,7 @@ args = parser.parse_args()
 with open(args.configuration) as file_pointer:
     configuration = json.load(file_pointer)
 
-    session = initialize(configuration['gnucash_file'])
+    session = initialize(configuration['gnucash_file'], configuration.get('account_with_currency', None))
     output_location = configuration.get('output_directory', 'output')
     report_location = configuration.get('report_definitions', 'reports')
 
