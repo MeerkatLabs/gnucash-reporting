@@ -6,6 +6,7 @@ from gnu_reporting.reports.federal_income import FederalIncomeTax
 from gnu_reporting.reports.retirement_401k import Retirement401kReport
 from gnu_reporting.reports.expenses_monthly import ExpensesMonthly, ExpensesMonthlyBox
 from gnu_reporting.reports.cash_flow import MonthlyCashFlow
+from gnu_reporting.reports.credit.credit_usage import CreditUsage
 
 from gnu_reporting.reports.base import register_plugin, get_report
 
@@ -22,3 +23,4 @@ def register_core_reports():
     register_plugin(ExpensesMonthly)
     register_plugin(ExpensesMonthlyBox)
     register_plugin(MonthlyCashFlow)
+    register_plugin(CreditUsage)
