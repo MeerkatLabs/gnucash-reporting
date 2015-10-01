@@ -3,8 +3,9 @@ import time
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_decimal, get_account
+from gnu_reporting.wrapper import get_decimal, get_account, get_currency
 import simplejson as json
+from decimal import Decimal
 
 
 class SavingsGoal(Report):
@@ -12,19 +13,35 @@ class SavingsGoal(Report):
 
     def __init__(self, name, account, goal):
         super(SavingsGoal, self).__init__(name)
-        self.account_name = account
+
+        if isinstance(account, basestring):
+            account = [account]
+
+        self.accounts = account
         self.goal_amount = goal
 
     def __call__(self):
-        account = get_account(self.account_name)
 
         todays_date = datetime.today()
         time_value = time.mktime(todays_date.timetuple())
 
-        balance = account.GetBalanceAsOfDate(time_value)
+        total_balance = Decimal('0.0')
+
+        currency = get_currency()
+
+        for account_name in self.accounts:
+            multiplier = Decimal('1.0')
+            if isinstance(account_name, basestring):
+                account = get_account(account_name)
+            else:
+                account = get_account(account_name[0])
+                multiplier = Decimal(account_name[1])
+
+            balance = account.GetBalanceAsOfDateInCurrency(time_value, currency, False)
+            total_balance += (get_decimal(balance) * multiplier)
 
         payload = self._generate_result()
-        payload['data']['balance'] = get_decimal(balance)
+        payload['data']['balance'] = total_balance
         payload['data']['goal'] = self.goal_amount
 
         return payload
