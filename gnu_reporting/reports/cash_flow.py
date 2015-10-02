@@ -31,7 +31,7 @@ class MonthlyCashFlow(Report):
 
         for account in account_walker(self._account_names):
 
-            for split in get_splits(account, start_of_trend, end_of_trend):
+            for split in get_splits(account, start_of_trend):
                 bucket.store_value(split)
 
         return_value = self._generate_result()
