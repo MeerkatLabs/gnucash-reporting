@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.abspath(os.getcwd()))
 from gnu_reporting.wrapper import initialize
 from gnu_reporting.reports import register_core_reports, get_report
 from gnu_reporting.configuration import register_core_configuration_plugins, configure_application
+from datetime import datetime
 
 register_core_reports()
 register_core_configuration_plugins()
@@ -75,7 +76,8 @@ for infile in sorted(reports_list):
     except Exception as e:
         print 'Exception caught: %s' % e
 
-with open(os.path.join(output_location, '__reports.json'), 'w') as all_report_file:
-    json.dump(all_reports, all_report_file)
-
 session.end()
+
+with open(os.path.join(output_location, '__reports.json'), 'w') as all_report_file:
+    json.dump(dict(last_updated=datetime.now().strftime('%c'), reports=all_reports), all_report_file)
+
