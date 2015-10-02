@@ -2,10 +2,11 @@
 Calculator that will go through and calculate the net worth of the accounts.
 """
 from datetime import date
-from decimal import Decimal
 import time
 
-from gnu_reporting.wrapper import account_walker, get_currency, get_decimal
+from gnu_reporting.wrapper import account_walker, get_decimal
+from gnu_reporting.configuration.currency import get_currency
+from gnu_reporting.configuration.inflation import get_inflation
 from gnu_reporting.reports.base import Report
 from dateutils import relativedelta
 from gnu_reporting.collate.bucket import MonthlyCollate
@@ -66,7 +67,7 @@ class NetWorthCalculator(Report):
                                         for key, value in net_bucket.container.iteritems()],
                                        key=lambda s: s['date'])
 
-        inflation = Decimal('0.002')
+        inflation = get_inflation()
         starting_point = None
         inflation_data = []
         for record in result['data']['net']:

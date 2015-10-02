@@ -3,7 +3,8 @@ import time
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_decimal, get_account, get_currency
+from gnu_reporting.wrapper import get_decimal, get_account
+from gnu_reporting.configuration.currency import get_currency
 import simplejson as json
 from decimal import Decimal
 

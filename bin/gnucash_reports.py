@@ -15,8 +15,10 @@ sys.path.insert(0, os.path.abspath(os.getcwd()))
 
 from gnu_reporting.wrapper import initialize
 from gnu_reporting.reports import register_core_reports, get_report
+from gnu_reporting.configuration import register_core_configuration_plugins, configure_application
 
 register_core_reports()
+register_core_configuration_plugins()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', dest='configuration', default='core.json',
@@ -27,9 +29,10 @@ args = parser.parse_args()
 with open(args.configuration) as file_pointer:
     configuration = json.load(file_pointer)
 
-    session = initialize(configuration['gnucash_file'], configuration.get('account_with_currency', None))
+    session = initialize(configuration['gnucash_file'])
     output_location = configuration.get('output_directory', 'output')
     report_location = configuration.get('report_definitions', 'reports')
+    configure_application(configuration.get('global', dict()))
 
 
 if not os.path.exists(output_location):

@@ -1,10 +1,9 @@
-from gnucash import Session, GncNumeric, Split
+from gnucash import Session
 from decimal import Decimal
 import time
 from datetime import date
 
 gnucash_session = None
-currency_value = None
 
 
 def initialize(file_uri, account_with_currency=None):
@@ -84,7 +83,3 @@ def account_walker(account_list, ignore_list=None, place_holders=False):
             yield account
 
         _account_list += [a.get_full_name() for a in account.get_children()]
-
-
-def get_currency():
-    return currency_value

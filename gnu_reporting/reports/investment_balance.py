@@ -3,6 +3,7 @@ Gather information about the balance of the investment accounts.
 """
 from gnu_reporting.reports.base import Report
 from gnu_reporting.wrapper import get_account, get_decimal, get_session
+from gnu_reporting.configuration.currency import get_currency
 from decimal import Decimal
 from operator import itemgetter
 import time
@@ -22,7 +23,7 @@ class InvestmentBalance(Report):
         last_dividend = Decimal('0.0')
         last_purchase = Decimal('0.0')
 
-        currency = account.GetSplitList()[0].GetParent().GetCurrency()
+        currency = get_currency()
 
         for split in account.GetSplitList():
             other_account_name = split.GetCorrAccountFullName()
