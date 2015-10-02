@@ -37,16 +37,16 @@ class InvestmentBalance(Report):
             else:
                 last_dividend += get_decimal(split.GetValue())
 
-            data['purchases'].append((date*1000, last_purchase))
-            data['dividend'].append((date*1000, last_dividend))
-            data['value'].append((date*1000, get_decimal(account.GetBalanceAsOfDateInCurrency(date, currency, False))))
+            data['purchases'].append((date, last_purchase))
+            data['dividend'].append((date, last_dividend))
+            data['value'].append((date, get_decimal(account.GetBalanceAsOfDateInCurrency(date, currency, False))))
 
         # Now get all of the price updates in the database.
         price_database = get_session().get_book().get_price_db()
         commodity = account.GetCommodity()
         for price in price_database.get_prices(commodity, None):
             date = time.mktime(price.get_time().timetuple())
-            data['value'].append((date*1000, get_decimal(account.GetBalanceAsOfDateInCurrency(date, currency, False))))
+            data['value'].append((date, get_decimal(account.GetBalanceAsOfDateInCurrency(date, currency, False))))
 
         data['value'] = sorted(data['value'], key=itemgetter(0))
 
