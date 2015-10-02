@@ -1,11 +1,12 @@
 """
 Attempt to determine federal tax information.
 """
-from gnu_reporting.reports.helpers.tax_tables import calculate_tax
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_account, get_decimal, get_splits
 from decimal import Decimal
 from datetime import date
+
+from gnu_reporting.configuration.tax_tables import calculate_tax
+from gnu_reporting.reports.base import Report
+from gnu_reporting.wrapper import get_account, get_decimal, get_splits
 
 
 class FederalIncomeTax(Report):
@@ -37,7 +38,7 @@ class FederalIncomeTax(Report):
                 value = get_decimal(split.GetAmount())
                 total_taxes += value
 
-        tax_value = calculate_tax('married_jointly', total_income)
+        tax_value = calculate_tax('federal', 'married_jointly', total_income)
 
         result = self._generate_result()
         result['data']['income'] = total_income
