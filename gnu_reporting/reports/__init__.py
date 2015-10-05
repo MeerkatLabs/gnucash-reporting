@@ -4,7 +4,7 @@ from gnu_reporting.reports.budget_level import BudgetLevel
 from gnu_reporting.reports.investment_balance import InvestmentBalance
 from gnu_reporting.reports.federal_income import FederalIncomeTax
 from gnu_reporting.reports.retirement_401k import Retirement401kReport
-from gnu_reporting.reports.expenses_monthly import ExpensesMonthly, ExpensesMonthlyBox
+from gnu_reporting.reports.expenses_monthly import ExpensesMonthly, ExpensesMonthlyBox, ExpenseCategories
 from gnu_reporting.reports.cash_flow import MonthlyCashFlow
 from gnu_reporting.reports.credit.credit_usage import CreditUsage
 from gnu_reporting.reports.net_worth import NetWorthCalculator
@@ -24,6 +24,7 @@ def register_core_reports():
     register_plugin(Retirement401kReport)
     register_plugin(ExpensesMonthly)
     register_plugin(ExpensesMonthlyBox)
+    register_plugin(ExpenseCategories)
     register_plugin(MonthlyCashFlow)
     register_plugin(CreditUsage)
     register_plugin(NetWorthCalculator)

@@ -7,9 +7,10 @@ import time
 from gnu_reporting.reports.base import Report
 from gnu_reporting.wrapper import get_splits, account_walker
 from dateutil.relativedelta import relativedelta
-from gnu_reporting.collate.bucket import MonthlyCollate
+from gnu_reporting.collate.bucket import MonthlyCollate, CategoryCollate
 from gnu_reporting.collate.store import split_summation
 from gnu_reporting.collate.bucket_generation import decimal_generator
+from operator import itemgetter
 import numpy as np
 
 
@@ -70,7 +71,7 @@ class ExpensesMonthlyBox(Report):
         beginning_of_month = datetime(todays_date.year, todays_date.month, 1)
 
         start_of_trend = beginning_of_month - relativedelta(months=self.past_months)
-        end_of_trend = beginning_of_month
+        end_of_trend = todays_date
 
         bucket = MonthlyCollate(start_of_trend, end_of_trend, decimal_generator, split_summation)
 
@@ -89,6 +90,41 @@ class ExpensesMonthlyBox(Report):
         return_value['data']['q1'] = np.percentile(results, 25)
         return_value['data']['q2'] = np.percentile(results, 50)
         return_value['data']['q3'] = np.percentile(results, 75)
+
+        return return_value
+
+
+class ExpenseCategories(Report):
+    report_type = 'expenses_categories'
+
+    def __init__(self, name, expenses_base, ignore_list=None, year=0):
+        super(ExpenseCategories, self).__init__(name)
+        self.expenses_base = expenses_base
+
+        if ignore_list:
+            self.ignore_list = ignore_list
+        else:
+            self.ignore_list = []
+
+        self.year = year
+
+    def __call__(self):
+        todays_date = datetime.today()
+        beginning_of_year = datetime(todays_date.year, 1, 1)
+
+        start_of_trend = beginning_of_year - relativedelta(years=self.year)
+        end_of_trend = start_of_trend + relativedelta(years=1)
+
+        bucket = CategoryCollate(decimal_generator, split_summation)
+
+        for account in account_walker(self.expenses_base, self.ignore_list):
+            for split in get_splits(account, start_of_trend, end_of_trend):
+                bucket.store_value(split)
+
+        return_value = self._generate_result()
+
+        return_value['data']['categories'] = sorted([[key, value] for key, value in bucket.container.iteritems()],
+                                                    key=itemgetter(1))
 
         return return_value
 

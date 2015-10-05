@@ -1,6 +1,7 @@
 from decimal import Decimal
 from dateutil.rrule import rrule, MONTHLY
 from datetime import date
+from collections import defaultdict
 
 
 def decimal_generator():
@@ -23,3 +24,13 @@ def monthly_buckets(start, end, default_value_generator=decimal_generator):
     return generate_buckets
 
 
+def category_buckets(default_value_generator):
+    """
+    Create a default dictionary that will generate the buckets if they are missing.
+    :param default_value_generator: value generator.
+    :return:
+    """
+    def generate_buckets():
+        return defaultdict(default_value_generator)
+
+    return generate_buckets

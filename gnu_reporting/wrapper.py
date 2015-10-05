@@ -83,3 +83,11 @@ def account_walker(account_list, ignore_list=None, place_holders=False):
             yield account
 
         _account_list += [a.get_full_name() for a in account.get_children()]
+
+
+def get_balance_on_date(account, date_value):
+    today_time = time.mktime(date_value.timetuple())
+
+    balance = account.GetBalanceAsOfDate(today_time)
+
+    return get_decimal(balance)
