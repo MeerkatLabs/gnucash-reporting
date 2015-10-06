@@ -3,7 +3,7 @@ Simple budget graph for this.
 """
 from gnu_reporting.reports.base import Report
 from gnu_reporting.wrapper import get_account, get_decimal, get_splits
-from datetime import date
+from gnu_reporting.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from calendar import monthrange
 
@@ -16,13 +16,13 @@ class BudgetLevel(Report):
         self.account_name = account
         self.budget_value = budget_value
 
+        self._start = PeriodStart.this_month
+        self._end = PeriodEnd.today
+
     def __call__(self):
         account = get_account(self.account_name)
 
-        today = date.today()
-        beginning_of_month = date(today.year, today.month, 1)
-
-        split_list = get_splits(account, beginning_of_month, today, debit=False)
+        split_list = get_splits(account, self._start.date, self._end.date, debit=False)
 
         balance = Decimal('0.0')
         for split in split_list:
@@ -30,9 +30,9 @@ class BudgetLevel(Report):
 
         payload = self._generate_result()
         payload['data']['balance'] = balance
-        payload['data']['month'] = beginning_of_month.month
-        payload['data']['daysInMonth'] = monthrange(today.year, today.month)[1]
-        payload['data']['today'] = today.day
+        payload['data']['month'] = self._start.date.month
+        payload['data']['daysInMonth'] = monthrange(self._end.date.year, self._end.date.day)[1]
+        payload['data']['today'] = self._end.date.day
         payload['data']['budgetValue'] = self.budget_value
 
         return payload

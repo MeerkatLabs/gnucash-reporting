@@ -1,5 +1,6 @@
 import bucket_generation as generator
 import key_generator as keys
+from dateutil.rrule import MONTHLY
 
 
 class BucketCollate(object):
@@ -29,12 +30,19 @@ class BucketCollate(object):
         return self._container
 
 
-class MonthlyCollate(BucketCollate):
+class PeriodCollate(BucketCollate):
+    def __init__(self, start, end, default_value_generator, store_function, frequency=MONTHLY, interval=1):
+        super(PeriodCollate, self).__init__(generator.monthly_buckets(start, end,
+                                                                      default_value_generator=default_value_generator,
+                                                                      frequency=frequency, interval=interval),
+                                            keys.period(start, end, frequency=frequency, interval=interval),
+                                            store_function)
+
+
+class MonthlyCollate(PeriodCollate):
 
     def __init__(self, start, end, default_value_generator, store_function):
-        super(MonthlyCollate, self).__init__(generator.monthly_buckets(start, end, default_value_generator),
-                                             keys.monthly,
-                                             store_function)
+        super(MonthlyCollate, self).__init__(start, end, default_value_generator, store_function)
 
 
 class CategoryCollate(BucketCollate):

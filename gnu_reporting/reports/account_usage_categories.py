@@ -5,8 +5,7 @@ that account.
 from gnu_reporting.configuration.expense_categories import get_category_for_account
 from gnu_reporting.wrapper import get_decimal, account_walker, get_splits
 from gnu_reporting.reports.base import Report
-from dateutil.relativedelta import relativedelta
-from datetime import date
+from gnu_reporting.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from operator import itemgetter
 
@@ -14,17 +13,17 @@ from operator import itemgetter
 class AccountUsageCategories(Report):
     report_type = 'account_usage_categories'
 
-    def __init__(self, name, account_list, past_months=0):
+    def __init__(self, name, account_list, period_start=PeriodStart.this_month.value,
+                 period_end=PeriodEnd.this_month.value):
         super(AccountUsageCategories, self).__init__(name)
         self._accounts = account_list
-        self._past_months = past_months
+        self._start = PeriodStart(period_start)
+        self._end = PeriodEnd(period_end)
 
     def __call__(self):
 
-        today = date.today()
-        beginning_of_month = date(today.year, today.month, 1)
-        start_of_trend = beginning_of_month - relativedelta(months=self._past_months)
-        end_of_trend = beginning_of_month - relativedelta(months=self._past_months-1)
+        start_of_trend = self._start.date
+        end_of_trend = self._end.date
 
         data = dict()
 
