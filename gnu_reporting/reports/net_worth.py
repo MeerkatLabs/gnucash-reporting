@@ -76,7 +76,7 @@ class NetWorthCalculator(Report):
         inflation_data = []
         for record in result['data']['net']:
             if starting_point:
-                starting_point += (starting_point*inflation)
+                starting_point += (starting_point * inflation)
             else:
                 starting_point = record['value']
 
@@ -109,7 +109,6 @@ class NetWorthTable(Report):
 
     def __call__(self):
         today = date.today()
-        end_of_month = date(today.year, today.month, monthrange(today.year, today.month)[1])
 
         trend_months = []
         for month_delta in self._trends:
@@ -123,71 +122,94 @@ class NetWorthTable(Report):
             new_date = date(relative.year, relative.month, monthrange(relative.year, relative.month)[1])
             delta_months.append(new_date)
 
-        currency = get_currency()
+        total_asset_data = self._calculate_payload(self._asset_definitions, delta_months, trend_months)
+        total_liability_data = self._calculate_payload(self._liability_definitions, delta_months, trend_months,
+                                                       liability=True)
 
-        total_asset_data = []
-        for definition in self._asset_definitions:
-            asset_data = dict(name=definition['name'],
-                              current_data=Decimal('0.0'),
-                              deltas=[Decimal('0.0') for a in delta_months],
-                              trend=[Decimal('0.0') for a in trend_months])
+        # Now to calculate the values for the net worth display
+        net_worth_data = dict(current_data=total_asset_data['current_data'] + total_liability_data['current_data'],
+                              deltas=[], trend=[])
+        for index, trend in enumerate(trend_months):
+            assets = total_asset_data['trend'][index]
+            expenses = total_liability_data['trend'][index]
+            net_worth_data['trend'].append(assets + expenses)
 
-            # Get Current Data first
-            for account in account_walker(definition['accounts']):
-                asset_data['current_data'] += get_balance_on_date(account, end_of_month, currency)
+        for index, delta in enumerate(delta_months):
+            assets = total_asset_data['delta_sub_total'][index]
+            liability = total_liability_data['delta_sub_total'][index]
+            net_value = assets + liability
 
-            # Calculate the trends
-            for index, trend in enumerate(trend_months):
-                for account in account_walker(definition['accounts']):
-                    asset_data['trend'][index] += get_balance_on_date(account, trend, currency)
+            try:
+                result = (net_worth_data['current_data'] - net_value) / net_value
+                net_worth_data['deltas'].append(result)
+            except:
+                net_worth_data['deltas'].append('N/A')
 
-            # Calculate deltas
-            for index, delta in enumerate(delta_months):
-                value = Decimal(0.0)
-                for account in account_walker(definition['accounts']):
-                    value += get_balance_on_date(account, delta, currency)
-                try:
-                    asset_data['deltas'][index] = (asset_data['current_data'] - value) / value
-                except:
-                    asset_data['deltas'][index] = 'N/A'
-
-            total_asset_data.append(asset_data)
-
-        total_liability_data = []
-        for definition in self._liability_definitions:
-            liability_data = dict(name=definition['name'],
-                                  current_data=Decimal('0.0'),
-                                  deltas=[Decimal('0.0') for a in delta_months],
-                                  trend=[Decimal('0.0') for a in trend_months])
-
-            # Get Current Data first
-            for account in account_walker(definition['accounts']):
-                liability_data['current_data'] += get_balance_on_date(account, end_of_month, currency)
-
-            # Calculate the trends
-            for index, trend in enumerate(trend_months):
-                for account in account_walker(definition['accounts']):
-                    liability_data['trend'][index] += get_balance_on_date(account, trend, currency)
-
-            # Calculate deltas
-            for index, delta in enumerate(delta_months):
-                value = Decimal(0.0)
-                for account in account_walker(definition['accounts']):
-                    value += get_balance_on_date(account, delta, currency)
-                try:
-                    liability_data['deltas'][index] = (liability_data['current_data'] - value) / value
-                except:
-                    liability_data['deltas'][index] = 'N/A'
-
-            total_liability_data.append(liability_data)
 
         results = self._generate_result()
         results['data']['trend'] = [time.mktime(t.timetuple()) for t in trend_months]
         results['data']['deltas'] = self._deltas
         results['data']['assets'] = total_asset_data
         results['data']['liability'] = total_liability_data
+        results['data']['net_worth'] = net_worth_data
 
         return results
+
+    def _calculate_payload(self, account_list, delta_months, trend_months, liability=False):
+        currency = get_currency()
+        today = date.today()
+        end_of_month = date(today.year, today.month, monthrange(today.year, today.month)[1])
+        total_data = dict(records=[], current_data=Decimal('0.0'),
+                          deltas=[Decimal('0.0') for a in delta_months],
+                          delta_sub_total=[Decimal('0.0') for a in delta_months],
+                          trend=[Decimal('0.0') for a in trend_months])
+
+        for definition in account_list:
+            definition_data = dict(name=definition['name'],
+                                   current_data=Decimal('0.0'),
+                                   deltas=[Decimal('0.0') for a in delta_months],
+                                   trend=[Decimal('0.0') for a in trend_months])
+
+            # Get Current Data first
+            for account in account_walker(definition['accounts']):
+                balance = get_balance_on_date(account, end_of_month, currency)
+                definition_data['current_data'] += balance
+                total_data['current_data'] += balance
+
+            # Calculate the trends
+            for index, trend in enumerate(trend_months):
+                for account in account_walker(definition['accounts']):
+                    balance = get_balance_on_date(account, trend, currency)
+                    definition_data['trend'][index] += balance
+                    total_data['trend'][index] += balance
+
+            # Calculate deltas
+            for index, delta in enumerate(delta_months):
+                value = Decimal(0.0)
+                for account in account_walker(definition['accounts']):
+                    balance = get_balance_on_date(account, delta, currency)
+                    value += balance
+                    total_data['delta_sub_total'][index] += balance
+
+                try:
+                    definition_data['deltas'][index] = (definition_data['current_data'] - value) / value
+                    if liability:
+                        definition_data['deltas'][index] = -definition_data['deltas'][index]
+                except:
+                    definition_data['deltas'][index] = 'N/A'
+
+            total_data['records'].append(definition_data)
+
+        # Calculate the deltas for the total values.
+        for index, value in enumerate(total_data['delta_sub_total']):
+            try:
+                total_data['deltas'][index] = (total_data['current_data'] - value) / value
+                if liability:
+                    total_data['deltas'][index] = -total_data['deltas'][index]
+            except:
+                definition_data['deltas'][index] = 'N/A'
+
+        return total_data
 
 
 if __name__ == '__main__':
@@ -207,5 +229,3 @@ if __name__ == '__main__':
         print 'e', e
     finally:
         session.end()
-
-
