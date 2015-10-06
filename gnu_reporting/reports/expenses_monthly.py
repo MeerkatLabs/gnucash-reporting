@@ -6,8 +6,9 @@ import time
 
 from gnu_reporting.reports.base import Report
 from gnu_reporting.wrapper import get_splits, account_walker
+from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
 from dateutil.relativedelta import relativedelta
-from gnu_reporting.collate.bucket import MonthlyCollate, CategoryCollate
+from gnu_reporting.collate.bucket import PeriodCollate, CategoryCollate
 from gnu_reporting.collate.store import split_summation
 from gnu_reporting.collate.bucket_generation import decimal_generator
 from operator import itemgetter
@@ -17,7 +18,8 @@ import numpy as np
 class ExpensesMonthly(Report):
     report_type = 'expenses_monthly'
 
-    def __init__(self, name, expenses_base, ignore_list=None, past_months=12):
+    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago.value,
+                 period_end=PeriodEnd.this_month.value, period_size=PeriodSize.month.value):
         super(ExpensesMonthly, self).__init__(name)
         self.expenses_base = expenses_base
 
@@ -26,19 +28,17 @@ class ExpensesMonthly(Report):
         else:
             self.ignore_list = []
 
-        self.past_months = past_months
+        self._start = PeriodStart(period_start)
+        self._end = PeriodEnd(period_end)
+        self._size = PeriodSize(period_size)
 
     def __call__(self):
-        todays_date = datetime.today()
-        beginning_of_month = datetime(todays_date.year, todays_date.month, 1)
 
-        start_of_trend = beginning_of_month - relativedelta(months=self.past_months)
-        end_of_trend = beginning_of_month
-
-        bucket = MonthlyCollate(start_of_trend, end_of_trend, decimal_generator, split_summation)
+        bucket = PeriodCollate(self._start.date, self._end.date, decimal_generator, split_summation,
+                               frequency=self._size.frequency, interval=self._size.interval)
 
         for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, start_of_trend):
+            for split in get_splits(account, self._start.date, self._end.date):
                 bucket.store_value(split)
 
         return_value = self._generate_result()
@@ -55,7 +55,8 @@ class ExpensesMonthly(Report):
 class ExpensesMonthlyBox(Report):
     report_type = 'expenses_monthly_box'
 
-    def __init__(self, name, expenses_base, ignore_list=None, past_months=12):
+    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago.value,
+                 period_end=PeriodEnd.this_month.value, period_size=PeriodSize.month.value):
         super(ExpensesMonthlyBox, self).__init__(name)
         self.expenses_base = expenses_base
 
@@ -64,19 +65,17 @@ class ExpensesMonthlyBox(Report):
         else:
             self.ignore_list = []
 
-        self.past_months = past_months
+        self._start = PeriodStart(period_start)
+        self._end = PeriodEnd(period_end)
+        self._size = PeriodSize(period_size)
 
     def __call__(self):
-        todays_date = datetime.today()
-        beginning_of_month = datetime(todays_date.year, todays_date.month, 1)
 
-        start_of_trend = beginning_of_month - relativedelta(months=self.past_months)
-        end_of_trend = todays_date
-
-        bucket = MonthlyCollate(start_of_trend, end_of_trend, decimal_generator, split_summation)
+        bucket = PeriodCollate(self._start.date, self._end.date, decimal_generator, split_summation,
+                               frequency=self._size.frequency, interval=self._size.interval)
 
         for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, start_of_trend):
+            for split in get_splits(account, self._start.date, self._end.date):
                 bucket.store_value(split)
 
         return_value = self._generate_result()
@@ -97,7 +96,8 @@ class ExpensesMonthlyBox(Report):
 class ExpenseCategories(Report):
     report_type = 'expenses_categories'
 
-    def __init__(self, name, expenses_base, ignore_list=None, year=0):
+    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_year.value,
+                 period_end=PeriodEnd.this_year.value):
         super(ExpenseCategories, self).__init__(name)
         self.expenses_base = expenses_base
 
@@ -106,19 +106,14 @@ class ExpenseCategories(Report):
         else:
             self.ignore_list = []
 
-        self.year = year
+        self._start = PeriodStart(period_start)
+        self._end = PeriodEnd(period_end)
 
     def __call__(self):
-        todays_date = datetime.today()
-        beginning_of_year = datetime(todays_date.year, 1, 1)
-
-        start_of_trend = beginning_of_year - relativedelta(years=self.year)
-        end_of_trend = start_of_trend + relativedelta(years=1)
-
         bucket = CategoryCollate(decimal_generator, split_summation)
 
         for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, start_of_trend, end_of_trend):
+            for split in get_splits(account, self._start.date, self._end.date):
                 bucket.store_value(split)
 
         return_value = self._generate_result()
