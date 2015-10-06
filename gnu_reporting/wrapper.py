@@ -80,7 +80,7 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
     return result
 
 
-def account_walker(account_list, ignore_list=None, place_holders=False):
+def account_walker(account_list, ignore_list=None, place_holders=False, recursive=True):
     """
     Generator method that will recursively walk the list of accounts provided, ignoring the accounts that are in the
     ignore list.
@@ -103,7 +103,8 @@ def account_walker(account_list, ignore_list=None, place_holders=False):
         if not account.GetPlaceholder() or place_holders:
             yield account
 
-        _account_list += [a.get_full_name() for a in account.get_children()]
+        if recursive:
+            _account_list += [a.get_full_name() for a in account.get_children()]
 
 
 def get_balance_on_date(account, date_value, currency=None):
