@@ -4,6 +4,7 @@ owner.
 """
 from gnu_reporting.reports.base import Report
 from gnu_reporting.wrapper import get_account, get_decimal, get_splits
+from gnu_reporting.periods import PeriodStart, PeriodEnd
 from datetime import date
 from decimal import Decimal
 
@@ -11,11 +12,15 @@ from decimal import Decimal
 class Retirement401kReport(Report):
     report_type = '401k_report'
 
-    def __init__(self, name, income_accounts, retirement_accounts, contribution_limit=None):
+    def __init__(self, name, income_accounts, retirement_accounts, contribution_limit=None,
+                 period_start=PeriodStart.this_year, period_end=PeriodEnd.this_year):
         super(Retirement401kReport, self).__init__(name)
 
         self.income_accounts = income_accounts
         self.retirement_accounts = retirement_accounts
+
+        self._start = PeriodStart(period_start)
+        self._end = PeriodEnd(period_end)
 
         if contribution_limit:
             self.contribution_limit = contribution_limit
@@ -30,7 +35,7 @@ class Retirement401kReport(Report):
         for account_name in self.income_accounts:
             account = get_account(account_name)
 
-            for split in get_splits(account, beginning_of_year):
+            for split in get_splits(account, self._start.date, self._end.date):
                 parent = split.parent
 
                 for income_split in parent.GetSplitList():

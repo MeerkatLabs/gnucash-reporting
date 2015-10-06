@@ -16,7 +16,7 @@ import numpy as np
 
 
 class ExpensesMonthly(Report):
-    report_type = 'expenses_monthly'
+    report_type = 'expenses_period'
 
     def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago.value,
                  period_end=PeriodEnd.this_month.value, period_size=PeriodSize.month.value):
@@ -53,10 +53,10 @@ class ExpensesMonthly(Report):
 
 
 class ExpensesMonthlyBox(Report):
-    report_type = 'expenses_monthly_box'
+    report_type = 'expenses_box'
 
-    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago.value,
-                 period_end=PeriodEnd.this_month.value, period_size=PeriodSize.month.value):
+    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago,
+                 period_end=PeriodEnd.this_month, period_size=PeriodSize.month):
         super(ExpensesMonthlyBox, self).__init__(name)
         self.expenses_base = expenses_base
 

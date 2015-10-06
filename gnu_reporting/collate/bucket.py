@@ -39,12 +39,6 @@ class PeriodCollate(BucketCollate):
                                             store_function)
 
 
-class MonthlyCollate(PeriodCollate):
-
-    def __init__(self, start, end, default_value_generator, store_function):
-        super(MonthlyCollate, self).__init__(start, end, default_value_generator, store_function)
-
-
 class CategoryCollate(BucketCollate):
     """
     Collage all of the splits into buckets based on the category that their account is defined in.

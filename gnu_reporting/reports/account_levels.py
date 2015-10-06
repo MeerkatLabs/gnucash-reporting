@@ -9,7 +9,7 @@ from gnu_reporting.periods import PeriodStart
 class AccountLevels(Report):
     report_type = 'account_levels'
 
-    def __init__(self, name, account, good_value, warn_value, error_value, when=PeriodStart.today.value):
+    def __init__(self, name, account, good_value, warn_value, error_value, when=PeriodStart.today):
         super(AccountLevels, self).__init__(name)
         self.account = account
         self.good_value = good_value

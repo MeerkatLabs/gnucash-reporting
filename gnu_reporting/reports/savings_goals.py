@@ -3,7 +3,8 @@ import time
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_decimal, get_account
+from gnu_reporting.wrapper import get_decimal, get_account, get_balance_on_date
+from gnu_reporting.periods import PeriodStart
 from gnu_reporting.configuration.currency import get_currency
 import simplejson as json
 from decimal import Decimal
@@ -12,7 +13,7 @@ from decimal import Decimal
 class SavingsGoal(Report):
     report_type = 'savings_goal'
 
-    def __init__(self, name, account, goal):
+    def __init__(self, name, account, goal, as_of=PeriodStart.today):
         super(SavingsGoal, self).__init__(name)
 
         if isinstance(account, basestring):
@@ -21,13 +22,11 @@ class SavingsGoal(Report):
         self.accounts = account
         self.goal_amount = goal
 
+        self.as_of = PeriodStart(as_of)
+
     def __call__(self):
 
-        todays_date = datetime.today()
-        time_value = time.mktime(todays_date.timetuple())
-
         total_balance = Decimal('0.0')
-
         currency = get_currency()
 
         for account_name in self.accounts:
@@ -38,8 +37,8 @@ class SavingsGoal(Report):
                 account = get_account(account_name[0])
                 multiplier = Decimal(account_name[1])
 
-            balance = account.GetBalanceAsOfDateInCurrency(time_value, currency, False)
-            total_balance += (get_decimal(balance) * multiplier)
+            balance = get_balance_on_date(account, self.as_of.date, currency)
+            total_balance += (balance * multiplier)
 
         payload = self._generate_result()
         payload['data']['balance'] = total_balance

@@ -13,8 +13,7 @@ from operator import itemgetter
 class AccountUsageCategories(Report):
     report_type = 'account_usage_categories'
 
-    def __init__(self, name, account_list, period_start=PeriodStart.this_month.value,
-                 period_end=PeriodEnd.this_month.value):
+    def __init__(self, name, account_list, period_start=PeriodStart.this_month, period_end=PeriodEnd.this_month):
         super(AccountUsageCategories, self).__init__(name)
         self._accounts = account_list
         self._start = PeriodStart(period_start)

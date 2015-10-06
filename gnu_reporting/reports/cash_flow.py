@@ -11,10 +11,10 @@ import time
 
 
 class MonthlyCashFlow(Report):
-    report_type = 'monthly_cash_flow_chart'
+    report_type = 'cash_flow_chart'
 
-    def __init__(self, name, accounts, period_start=PeriodStart.this_month_year_ago.value,
-                 period_end=PeriodEnd.this_month.value, period_size=PeriodSize.month):
+    def __init__(self, name, accounts, period_start=PeriodStart.this_month_year_ago,
+                 period_end=PeriodEnd.this_month, period_size=PeriodSize.month):
         super(MonthlyCashFlow, self).__init__(name)
         self._account_names = accounts
 

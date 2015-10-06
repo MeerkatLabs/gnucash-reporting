@@ -2,6 +2,27 @@ from gnucash import Session
 from decimal import Decimal
 import time
 from datetime import date
+import enum
+
+
+@enum.unique
+class AccountTypes(enum.IntEnum):
+    none = -1
+    bank = 0
+    cash = 1
+    credit = 3
+    asset = 2
+    liability = 4
+    stock = 5
+    mutual_fund = 6
+    currency = 7
+    income = 8
+    expense = 9
+    equity = 10
+    accounts_receivable = 11
+    accounts_payable = 12
+    root = 13
+    trading = 14
 
 gnucash_session = None
 
@@ -85,9 +106,12 @@ def account_walker(account_list, ignore_list=None, place_holders=False):
         _account_list += [a.get_full_name() for a in account.get_children()]
 
 
-def get_balance_on_date(account, date_value):
+def get_balance_on_date(account, date_value, currency=None):
     today_time = time.mktime(date_value.timetuple())
 
-    balance = account.GetBalanceAsOfDate(today_time)
+    if currency:
+        balance = account.GetBalanceAsOfDateInCurrency(today_time, currency, False)
+    else:
+        balance = account.GetBalanceAsOfDate(today_time)
 
     return get_decimal(balance)

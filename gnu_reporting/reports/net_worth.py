@@ -4,12 +4,13 @@ Calculator that will go through and calculate the net worth of the accounts.
 from datetime import date
 import time
 
-from gnu_reporting.wrapper import account_walker, get_decimal
+from gnu_reporting.wrapper import account_walker, get_decimal, get_balance_on_date
 from gnu_reporting.configuration.currency import get_currency
 from gnu_reporting.configuration.inflation import get_monthly_inflation
 from gnu_reporting.reports.base import Report
+from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
 from dateutils import relativedelta
-from gnu_reporting.collate.bucket import MonthlyCollate
+from gnu_reporting.collate.bucket import PeriodCollate
 from gnu_reporting.collate.store import split_summation
 from gnu_reporting.collate.bucket_generation import decimal_generator
 
@@ -17,40 +18,41 @@ from gnu_reporting.collate.bucket_generation import decimal_generator
 class NetWorthCalculator(Report):
     report_type = 'net_worth'
 
-    def __init__(self, name, asset_accounts, liability_accounts, past_months=12):
+    def __init__(self, name, asset_accounts, liability_accounts, period_start=PeriodStart.this_month_year_ago,
+                 period_end=PeriodEnd.today, period_size=PeriodSize.month):
         super(NetWorthCalculator, self).__init__(name)
         self._asset_accounts = asset_accounts
         self._liability_accounts = liability_accounts
-        self._past_months = past_months
+
+        self._period_start = PeriodStart(period_start)
+        self._period_end = PeriodEnd(period_end)
+        self._period_size = PeriodSize(period_size)
 
     def __call__(self):
-        todays_date = date.today()
-        beginning_of_month = date(todays_date.year, todays_date.month, 1)
 
-        start_of_trend = beginning_of_month - relativedelta(months=self._past_months)
-        end_of_trend = beginning_of_month
+        start_of_trend = self._period_start.date
+        end_of_trend = self._period_end.date
 
-        asset_bucket = MonthlyCollate(start_of_trend, end_of_trend, decimal_generator, split_summation)
-        liability_bucket = MonthlyCollate(start_of_trend, end_of_trend, decimal_generator, split_summation)
-        net_bucket = MonthlyCollate(start_of_trend, end_of_trend, decimal_generator, split_summation)
+        asset_bucket = PeriodCollate(start_of_trend, end_of_trend, decimal_generator, split_summation,
+                                     frequency=self._period_size.frequency, interval=self._period_size.interval)
+        liability_bucket = PeriodCollate(start_of_trend, end_of_trend, decimal_generator, split_summation,
+                                         frequency=self._period_size.frequency, interval=self._period_size.interval)
+        net_bucket = PeriodCollate(start_of_trend, end_of_trend, decimal_generator, split_summation,
+                                   frequency=self._period_size.frequency, interval=self._period_size.interval)
 
         currency = get_currency()
 
         # Calculate the asset balances
         for account in account_walker(self._asset_accounts):
             for key, value in asset_bucket.container.iteritems():
-                time_key = time.mktime(key.timetuple())
-                balance = account.GetBalanceAsOfDateInCurrency(time_key, currency, False)
-
-                asset_bucket.container[key] += get_decimal(balance)
+                balance = get_balance_on_date(account, key, currency)
+                asset_bucket.container[key] += balance
 
         # Calculate the liability balances
         for account in account_walker(self._liability_accounts):
             for key, value in liability_bucket.container.iteritems():
-                time_key = time.mktime(key.timetuple())
-                balance = account.GetBalanceAsOfDateInCurrency(time_key, currency, False)
-
-                liability_bucket.container[key] += get_decimal(balance)
+                balance = get_balance_on_date(account, key, currency)
+                liability_bucket.container[key] += balance
 
         # Now calculate the net values from the difference.
         for key, value in liability_bucket.container.iteritems():
