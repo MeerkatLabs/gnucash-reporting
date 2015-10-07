@@ -27,13 +27,9 @@ class AccountTypes(enum.IntEnum):
 gnucash_session = None
 
 
-def initialize(file_uri, account_with_currency=None):
-    global gnucash_session, currency_value
+def initialize(file_uri):
+    global gnucash_session
     gnucash_session = Session(file_uri, is_new=False)
-
-    if account_with_currency:
-        currency_value = get_account(account_with_currency).GetCommodity()
-
     return gnucash_session
 
 
