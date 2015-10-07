@@ -1,6 +1,6 @@
 from gnu_reporting.reports.savings_goals import SavingsGoal, SavingsGoalTrend
 from gnu_reporting.reports.account_levels import AccountLevels
-from gnu_reporting.reports.budget_level import BudgetLevel, BudgetPlanning
+from gnu_reporting.reports.budget_level import BudgetLevel, BudgetPlanning, CategoryBudgetLevel
 from gnu_reporting.reports.investment_balance import InvestmentBalance
 from gnu_reporting.reports.federal_income import FederalIncomeTax
 from gnu_reporting.reports.retirement_401k import Retirement401kReport
@@ -21,6 +21,7 @@ def register_core_reports():
     register_plugin(AccountLevels)
     register_plugin(BudgetLevel)
     register_plugin(BudgetPlanning)
+    register_plugin(CategoryBudgetLevel)
     register_plugin(InvestmentBalance)
     register_plugin(FederalIncomeTax)
     register_plugin(Retirement401kReport)

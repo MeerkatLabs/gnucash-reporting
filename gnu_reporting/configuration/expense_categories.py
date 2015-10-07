@@ -47,3 +47,12 @@ def get_category_for_account(account_name):
         print 'Returning: %s -> %s' % (account_name, _default_category)
 
     return value
+
+
+def get_accounts_for_category(category_name):
+    """
+    Return all of the accounts associated with a specific category.
+    :param category_name:
+    :return:
+    """
+    return _expense_categories.get(category_name, [])

@@ -2,7 +2,8 @@
 Simple budget graph for this.
 """
 from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_account, get_decimal, get_splits
+from gnu_reporting.wrapper import get_account, get_decimal, get_splits, account_walker
+from gnu_reporting.configuration.expense_categories import get_accounts_for_category
 from gnu_reporting.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from calendar import monthrange
@@ -13,20 +14,24 @@ class BudgetLevel(Report):
 
     def __init__(self, name, account, budget_value):
         super(BudgetLevel, self).__init__(name)
+
+        if isinstance(account, basestring):
+            account = [account]
+
         self.account_name = account
-        self.budget_value = budget_value
+        self.budget_value = Decimal(budget_value)
 
         self._start = PeriodStart.this_month
         self._end = PeriodEnd.today
 
     def __call__(self):
-        account = get_account(self.account_name)
-
-        split_list = get_splits(account, self._start.date, self._end.date, debit=False)
-
         balance = Decimal('0.0')
-        for split in split_list:
-            balance += get_decimal(split.GetAmount())
+
+        for account in account_walker(self.account_name):
+            split_list = get_splits(account, self._start.date, self._end.date, debit=False)
+
+            for split in split_list:
+                balance += get_decimal(split.GetAmount())
 
         payload = self._generate_result()
         payload['data']['balance'] = balance
@@ -36,6 +41,13 @@ class BudgetLevel(Report):
         payload['data']['budgetValue'] = self.budget_value
 
         return payload
+
+
+class CategoryBudgetLevel(BudgetLevel):
+    report_type = 'category_budget_level'
+
+    def __init__(self, name, category, budget_value):
+        super(CategoryBudgetLevel, self).__init__(name, get_accounts_for_category(category), budget_value)
 
 
 class BudgetPlanning(Report):
