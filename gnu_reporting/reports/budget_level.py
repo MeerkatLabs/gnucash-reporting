@@ -37,6 +37,34 @@ class BudgetLevel(Report):
 
         return payload
 
+
+class BudgetPlanning(Report):
+    report_type = 'budget_planning'
+
+    def __init__(self, name, income, expense_definitions):
+        super(BudgetPlanning, self).__init__(name)
+
+        self.income = Decimal(income)
+        self.expense_definitions = expense_definitions
+
+    def __call__(self):
+        remaining_income = self.income
+
+        categories = []
+
+        for definition in self.expense_definitions:
+            value = Decimal(definition['value'])
+            categories.append(dict(name=definition['name'], value=value))
+            remaining_income -= value
+
+        payload = self._generate_result()
+        payload['data']['income'] = self.income
+        payload['data']['remaining'] = remaining_income
+        payload['data']['categories'] = categories
+
+        return payload
+
+
 if __name__ == '__main__':
 
     from gnu_reporting.wrapper import initialize
