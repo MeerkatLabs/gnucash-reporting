@@ -9,8 +9,9 @@ from gnu_reporting.reports.cash_flow import MonthlyCashFlow
 from gnu_reporting.reports.credit.credit_usage import CreditUsage
 from gnu_reporting.reports.net_worth import NetWorthCalculator, NetWorthTable
 from gnu_reporting.reports.account_usage_categories import AccountUsageCategories
+from gnu_reporting.reports.income_expenses import IncomeVsExpense
 
-from gnu_reporting.reports.base import register_plugin, get_report
+from gnu_reporting.reports.base import register_plugin, get_report, build_report
 
 
 def register_core_reports():
@@ -30,3 +31,4 @@ def register_core_reports():
     register_plugin(NetWorthCalculator)
     register_plugin(NetWorthTable)
     register_plugin(AccountUsageCategories)
+    register_plugin(IncomeVsExpense)

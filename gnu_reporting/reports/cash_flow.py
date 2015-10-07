@@ -55,7 +55,8 @@ if __name__ == '__main__':
     session = initialize('data/Accounts.gnucash')
 
     try:
-        report = MonthlyCashFlow('expenses', ['Assets.Seaside View Rental'], period_size=PeriodSize.two_week.value)
+        report = MonthlyCashFlow('expenses', ['Assets.Seaside View Rental'],
+                                 period_size=PeriodSize.two_week.value)
 
         result = report()
 

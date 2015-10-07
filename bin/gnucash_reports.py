@@ -8,13 +8,18 @@ import os
 import simplejson as json
 import glob
 import logging
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 logger = logging.getLogger(__name__)
 
 sys.path.insert(0, os.path.abspath(os.getcwd()))
 
 from gnu_reporting.wrapper import initialize
-from gnu_reporting.reports import register_core_reports, get_report
+from gnu_reporting.reports import register_core_reports, build_report
 from gnu_reporting.configuration import register_core_configuration_plugins, configure_application
 from datetime import datetime
 
@@ -22,13 +27,13 @@ register_core_reports()
 register_core_configuration_plugins()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--config', dest='configuration', default='core.json',
+parser.add_argument('-c', '--config', dest='configuration', default='core.yaml',
                     help='core configuration details of the application')
 
 args = parser.parse_args()
 
 with open(args.configuration) as file_pointer:
-    configuration = json.load(file_pointer)
+    configuration = load(file_pointer, Loader=Loader)
 
     session = initialize(configuration['gnucash_file'])
     output_location = configuration.get('output_directory', 'output')
@@ -41,33 +46,27 @@ if not os.path.exists(output_location):
 
 all_reports = []
 
-reports_list = glob.glob(os.path.join(report_location, '*.json'))
+reports_list = glob.glob(os.path.join(report_location, '*.yaml'))
 for infile in sorted(reports_list):
 
     try:
         print 'Processing: %s' % infile
         with open(infile) as report_configuration_file:
-            report_configuration = json.load(report_configuration_file)
+            report_configuration = load(report_configuration_file, Loader=Loader)
 
             result_definition = dict(name=report_configuration.get('page_name', 'Unnamed Page'),
                                      reports=[])
 
             for report_definition in report_configuration['definitions']:
 
-                name = report_definition.get('name', 'Unnamed Report')
-                report_type = report_definition.get('type', 'UNDEFINED_REPORT')
-                definition = report_definition.get('definition', dict())
+                _report = build_report(report_definition)
 
-                print '  Running: %s' % name
-
-                report = get_report(report_type)
-                if report:
-                    _report = report(name, **definition)
+                if _report:
+                    print '  Running: %s' % _report.name
                     payload = _report()
-
                     result_definition['reports'].append(payload)
 
-            output_file_name = os.path.split(infile)[-1]
+            output_file_name = os.path.split(infile)[-1] + '.json'
 
             with open(os.path.join(output_location, output_file_name), 'w') as output_file:
                 json.dump(result_definition, output_file)

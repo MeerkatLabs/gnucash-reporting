@@ -19,8 +19,9 @@ class BucketCollate(object):
     def reinitialize(self):
         self._container = self._bucket_generation()
 
-    def store_value(self, value):
-        key = self._hash_method(value)
+    def store_value(self, value, key=None):
+        if key is None:
+            key = self._hash_method(value)
         bucket = self._container[key]
         result = self._store_function(bucket, value)
         self._container[key] = result

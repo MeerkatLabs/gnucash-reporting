@@ -42,4 +42,8 @@ def get_category_for_account(account_name):
     :return:
     """
     value = _reverse.get(account_name, _default_category)
+
+    if value == _default_category:
+        print 'Returning: %s -> %s' % (account_name, _default_category)
+
     return value

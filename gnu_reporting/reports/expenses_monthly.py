@@ -134,7 +134,7 @@ if __name__ == '__main__':
         report = ExpensesMonthlyBox('expenses', ['Expenses'], ['Expenses.Taxes',
                                                                'Expenses.Seaside View',
                                                                'Expenses.ISSACCorp',
-                                                               'Expenses.DQI'], past_months=12)
+                                                               'Expenses.DQI'])
 
         result = report()
 
