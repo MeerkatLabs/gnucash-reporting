@@ -41,7 +41,7 @@ class AccountUsageCategories(Report):
                         data[category] = current_balance
 
         result = self._generate_result()
-        result['data']['categories'] = sorted([[key, value] for key, value in data.iteritems()], key=itemgetter(1))
+        result['data']['categories'] = sorted([[key, value] for key, value in data.iteritems()], key=itemgetter(0))
 
         return result
 
