@@ -32,3 +32,10 @@ def store_summation(bucket, value):
     bucket += value
 
     return bucket
+
+
+def count(bucket, value):
+
+    bucket += 1
+
+    return bucket

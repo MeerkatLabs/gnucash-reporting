@@ -8,6 +8,10 @@ def decimal_generator():
     return Decimal('0.0')
 
 
+def integer_generator():
+    return int()
+
+
 def debit_credit_generator():
     return dict(debit=Decimal('0.0'), credit=Decimal('0.0'))
 
