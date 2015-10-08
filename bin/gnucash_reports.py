@@ -9,6 +9,8 @@ import simplejson as json
 import glob
 import logging
 from yaml import load, dump
+import os.path
+import time
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
@@ -77,6 +79,14 @@ for infile in sorted(reports_list):
 
 session.end()
 
+file_modification_time = time.ctime(os.path.getmtime(configuration['gnucash_file']))
+
+definition_dictionary = dict(
+    modification_time=file_modification_time,
+    last_updated=datetime.now().strftime('%c'),
+    reports=all_reports
+)
+
 with open(os.path.join(output_location, '__reports.json'), 'w') as all_report_file:
-    json.dump(dict(last_updated=datetime.now().strftime('%c'), reports=all_reports), all_report_file)
+    json.dump(definition_dictionary, all_report_file)
 
