@@ -6,7 +6,7 @@ from gnu_reporting.reports.income_tax import IncomeTax
 from gnu_reporting.reports.retirement_401k import Retirement401kReport
 from gnu_reporting.reports.expenses_monthly import ExpensesMonthly, ExpensesMonthlyBox, ExpenseCategories
 from gnu_reporting.reports.cash_flow import MonthlyCashFlow
-from gnu_reporting.reports.credit.credit_usage import CreditUsage
+from gnu_reporting.reports.credit.credit_usage import CreditUsage, DebtVsLiquidAssets
 from gnu_reporting.reports.net_worth import NetWorthCalculator, NetWorthTable
 from gnu_reporting.reports.account_usage_categories import AccountUsageCategories
 from gnu_reporting.reports.income_expenses import IncomeVsExpense
@@ -30,6 +30,7 @@ def register_core_reports():
     register_plugin(ExpenseCategories)
     register_plugin(MonthlyCashFlow)
     register_plugin(CreditUsage)
+    register_plugin(DebtVsLiquidAssets)
     register_plugin(NetWorthCalculator)
     register_plugin(NetWorthTable)
     register_plugin(AccountUsageCategories)

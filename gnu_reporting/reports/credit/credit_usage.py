@@ -1,7 +1,9 @@
 """
 Report that will show the amount of credit available, vs. currently used.
 """
-from gnu_reporting.wrapper import get_account, get_decimal
+from gnu_reporting.wrapper import get_account, get_decimal, account_walker, get_balance_on_date
+from gnu_reporting.periods import PeriodStart
+from gnu_reporting.configuration.currency import get_currency
 from gnu_reporting.reports.base import Report
 from decimal import Decimal
 from datetime import date
@@ -37,3 +39,31 @@ class CreditUsage(Report):
         payload['data']['credit_amount'] = -credit_used
 
         return payload
+
+
+class DebtVsLiquidAssets(Report):
+    report_type = 'debt_vs_liquid_assets'
+
+    def __init__(self, name, credit_accounts, liquid_asset_accounts):
+        super(DebtVsLiquidAssets, self).__init__(name)
+        self._credit_accounts = credit_accounts
+        self._liquid_asset_accounts = liquid_asset_accounts
+
+    def __call__(self):
+
+        credit_used = Decimal('0.0')
+        liquid_assets = Decimal('0.0')
+
+        currency = get_currency()
+
+        for credit_account in account_walker(self._credit_accounts):
+            credit_used += get_balance_on_date(credit_account, PeriodStart.today.date, currency)
+
+        for liquid_asset_account in account_walker(self._liquid_asset_accounts):
+            liquid_assets += get_balance_on_date(liquid_asset_account, PeriodStart.today.date, currency)
+
+        result = self._generate_result()
+        result['data']['credit_used'] = -credit_used
+        result['data']['liquid_assets'] = liquid_assets
+
+        return result
