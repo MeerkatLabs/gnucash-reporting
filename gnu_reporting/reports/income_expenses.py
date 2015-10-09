@@ -44,11 +44,11 @@ class IncomeVsExpense(Report):
             # when paid, and the expense accounts are 'credited' when purchased.
             credit_values.append(dict(date=time_value, value=-value['credit']))
             debit_values.append(dict(date=time_value, value=-value['debit']))
-            difference_value.append(dict(date=time_value, value=value['credit'] + value['debit']))
+            difference_value.append(dict(date=time_value, value=-(value['debit'] + value['credit'])))
 
         # Income accounts are the debits, and Expense accounts are the credits.
         return_value['data']['expenses'] = sorted(credit_values, key=lambda s: s['date'])
         return_value['data']['income'] = sorted(debit_values, key=lambda s: s['date'])
-        return_value['data']['net'] = sorted(debit_values, key=lambda s: ['date'])
+        return_value['data']['net'] = sorted(difference_value, key=lambda s: s['date'])
 
         return return_value
