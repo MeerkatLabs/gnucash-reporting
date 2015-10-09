@@ -9,16 +9,19 @@ from gnu_reporting.wrapper import get_account, get_decimal, get_splits
 from gnu_reporting.periods import PeriodStart, PeriodEnd
 
 
-class FederalIncomeTax(Report):
-    report_type = 'federal_income'
+class IncomeTax(Report):
+    report_type = 'income_tax'
 
     def __init__(self, name, income_accounts, tax_accounts, period_start=PeriodStart.this_year,
-                 period_end=PeriodEnd.this_year):
-        super(FederalIncomeTax, self).__init__(name)
+                 period_end=PeriodEnd.this_year, tax_name='federal', tax_status='single'):
+        super(IncomeTax, self).__init__(name)
         self.income_accounts = income_accounts
         self.tax_accounts = tax_accounts
         self._start = PeriodStart(period_start)
         self._end = PeriodEnd(period_end)
+
+        self._tax_name = tax_name
+        self._tax_status = tax_status
 
     def __call__(self):
 
@@ -38,7 +41,7 @@ class FederalIncomeTax(Report):
                 value = get_decimal(split.GetAmount())
                 total_taxes += value
 
-        tax_value = calculate_tax('federal', 'married_jointly', total_income)
+        tax_value = calculate_tax(self._tax_name, self._tax_status, total_income)
 
         result = self._generate_result()
         result['data']['income'] = total_income
