@@ -2,17 +2,18 @@
 Simple budget graph for this.
 """
 from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_account, get_decimal, get_splits, account_walker
+from gnu_reporting.wrapper import get_decimal, get_splits, account_walker
 from gnu_reporting.configuration.expense_categories import get_accounts_for_category
 from gnu_reporting.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from calendar import monthrange
+from datetime import date
 
 
 class BudgetLevel(Report):
     report_type = 'budget_level'
 
-    def __init__(self, name, account, budget_value):
+    def __init__(self, name, account, budget_value, year_to_date=True):
         super(BudgetLevel, self).__init__(name)
 
         if isinstance(account, basestring):
@@ -21,24 +22,38 @@ class BudgetLevel(Report):
         self.account_name = account
         self.budget_value = Decimal(budget_value)
 
-        self._start = PeriodStart.this_month
-        self._end = PeriodEnd.today
+        self._year_to_date = year_to_date
 
     def __call__(self):
         balance = Decimal('0.0')
 
         for account in account_walker(self.account_name):
-            split_list = get_splits(account, self._start.date, self._end.date, debit=False)
+            split_list = get_splits(account, PeriodStart.this_month.date, PeriodEnd.today.date, debit=False)
 
             for split in split_list:
                 balance += get_decimal(split.GetAmount())
 
         payload = self._generate_result()
         payload['data']['balance'] = balance
-        payload['data']['month'] = self._start.date.month
-        payload['data']['daysInMonth'] = monthrange(self._end.date.year, self._end.date.day)[1]
-        payload['data']['today'] = self._end.date.day
+        payload['data']['month'] = PeriodEnd.today.date.month
+        payload['data']['daysInMonth'] = monthrange(PeriodEnd.today.date.year,
+                                                    PeriodEnd.today.date.month)[1]
+        payload['data']['today'] = PeriodEnd.today.date.day
         payload['data']['budgetValue'] = self.budget_value
+
+        if self._year_to_date:
+            yearly_balance = Decimal('0.0')
+
+            for account in account_walker(self.account_name):
+                split_list = get_splits(account, PeriodStart.this_year.date, PeriodEnd.this_year.date, debit=False)
+
+                for split in split_list:
+                    yearly_balance += get_decimal(split.GetAmount())
+
+            today = date.today()
+            payload['data']['yearlyBalance'] = yearly_balance
+            payload['data']['daysInYear'] = (date(today.year+1, 1, 1) - date(today.year, 1, 1)).days
+            payload['data']['currentYearDay'] = today.timetuple().tm_yday
 
         return payload
 
