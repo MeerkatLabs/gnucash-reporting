@@ -8,6 +8,7 @@ from gnu_reporting.wrapper import get_account, get_decimal, get_session, get_bal
 from gnu_reporting.collate.bucket import PeriodCollate
 from gnu_reporting.collate.key_generator import period
 from gnu_reporting.configuration.currency import get_currency
+from gnu_reporting.configuration.investment_allocations import get_asset_allocation
 from decimal import Decimal
 from operator import itemgetter
 import time
@@ -113,10 +114,8 @@ def store_investment(bucket, value):
        account_type == AccountTypes.equity:
         # Asset or mutual fund transfer
         bucket['money_in'] += change_amount
-        print '  Adding Money in: %s' % other_account_name
     elif account_type == AccountTypes.income:
         bucket['income'] += get_decimal(value.GetValue())
-        print '  Add income: %s' % other_account_name
     elif account_type == AccountTypes.expense:
         bucket['expense'] += get_decimal(value.GetValue())
     else:
@@ -153,7 +152,6 @@ class InvestmentTrend(Report):
         currency = get_currency()
 
         for account in account_walker(self._investment_accounts, ignore_list=self._ignore_accounts):
-            print 'Processing: %s' % account.get_full_name()
             for split in get_splits(account, self._period_start.date, self._period_end.date):
                 buckets.store_value(split)
 
@@ -186,6 +184,37 @@ class InvestmentTrend(Report):
             monthly_start = record[1]
 
         return results
+
+
+class InvestmentAllocation(Report):
+    report_type = 'investment_allocation'
+
+    def __init__(self, name, investment_accounts, ignore_accounts=None):
+        super(InvestmentAllocation, self).__init__(name)
+        self._investment_accounts = investment_accounts
+        if ignore_accounts:
+            self._ignore_accounts = ignore_accounts
+        else:
+            self._ignore_accounts = []
+
+    def __call__(self):
+        breakdown = dict()
+        today = datetime.today()
+        currency = get_currency()
+
+        for account in account_walker(self._investment_accounts, self._ignore_accounts):
+            balance = get_balance_on_date(account, today, currency)
+            commodity = account.GetCommodity().get_nice_symbol()
+
+            results = get_asset_allocation(commodity, balance)
+
+            for key, value in results.iteritems():
+                breakdown[key] = breakdown.get(key, Decimal('0.0')) + value
+
+        return_value = self._generate_result()
+        return_value['data']['categories'] = [[key, value] for key, value in breakdown.iteritems()]
+
+        return return_value
 
 
 if __name__ == '__main__':
