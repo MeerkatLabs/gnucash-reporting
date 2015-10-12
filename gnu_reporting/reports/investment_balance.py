@@ -90,6 +90,104 @@ class InvestmentBalance(Report):
         return results
 
 
+def investment_bucket_generator():
+    return dict(money_in=Decimal('0.0'), income=Decimal('0.0'), expense=Decimal('0.0'))
+
+
+def store_investment(bucket, value):
+    other_account_name = value.GetCorrAccountFullName()
+    other_account = get_account(other_account_name)
+
+    account_type = AccountTypes(other_account.GetType())
+
+    # Find the correct amount that was paid from the account into this account.
+    change_amount = get_decimal(value.GetValue())
+
+    if change_amount > 0:
+        # Need to get the value from the corr account split.
+        for parent_splits in value.parent.GetSplitList():
+            if parent_splits.GetAccount().get_full_name() == other_account_name:
+                change_amount = -get_decimal(parent_splits.GetValue())
+
+    if account_type == AccountTypes.mutual_fund or account_type == AccountTypes.asset or \
+       account_type == AccountTypes.equity:
+        # Asset or mutual fund transfer
+        bucket['money_in'] += change_amount
+        print '  Adding Money in: %s' % other_account_name
+    elif account_type == AccountTypes.income:
+        bucket['income'] += get_decimal(value.GetValue())
+        print '  Add income: %s' % other_account_name
+    elif account_type == AccountTypes.expense:
+        bucket['expense'] += get_decimal(value.GetValue())
+    else:
+        print 'Unknown account type: %s' % account_type
+
+    return bucket
+
+
+class InvestmentTrend(Report):
+    report_type = 'investment_trend'
+
+    def __init__(self, name, investment_accounts, ignore_accounts=None,
+                 period_start=PeriodStart.this_month_year_ago,
+                 period_end=PeriodEnd.this_month, period_size=PeriodSize.month):
+        super(InvestmentTrend, self).__init__(name)
+        self._investment_accounts = investment_accounts
+        if ignore_accounts:
+            self._ignore_accounts = ignore_accounts
+        else:
+            self._ignore_accounts = []
+
+        self._period_start = PeriodStart(period_start)
+        self._period_end = PeriodEnd(period_end)
+        self._period_size = PeriodSize(period_size)
+
+    def __call__(self):
+
+        buckets = PeriodCollate(self._period_start.date, self._period_end.date,
+                                investment_bucket_generator, store_investment, frequency=self._period_size.frequency,
+                                interval=self._period_size.interval)
+
+        start_value = Decimal('0.0')
+        start_value_date = self._period_start.date - relativedelta(days=1)
+        currency = get_currency()
+
+        for account in account_walker(self._investment_accounts, ignore_list=self._ignore_accounts):
+            print 'Processing: %s' % account.get_full_name()
+            for split in get_splits(account, self._period_start.date, self._period_end.date):
+                buckets.store_value(split)
+
+            start_value += get_balance_on_date(account, start_value_date, currency)
+
+        results = self._generate_result()
+        results['data']['start_value'] = start_value
+
+        results['data']['income'] = sorted(
+            [(time.mktime(key.timetuple()), value['income']) for key, value in buckets.container.iteritems()],
+            key=itemgetter(0))
+
+        results['data']['money_in'] = sorted(
+            [(time.mktime(key.timetuple()), value['money_in']) for key, value in buckets.container.iteritems()],
+            key=itemgetter(0))
+
+        results['data']['expense'] = sorted(
+            [(time.mktime(key.timetuple()), value['expense']) for key, value in buckets.container.iteritems()],
+            key=itemgetter(0))
+
+        results['data']['basis'] = sorted(
+            [[time.mktime(key.timetuple()), Decimal('0.0')] for key in buckets.container.keys()],
+            key=itemgetter(0)
+        )
+
+        monthly_start = start_value
+        for index, record in enumerate(results['data']['basis']):
+            record[1] += (monthly_start + results['data']['income'][index][1] + results['data']['money_in'][index][1] +
+                          results['data']['expense'][index][1])
+            monthly_start = record[1]
+
+        return results
+
+
 if __name__ == '__main__':
 
     from gnu_reporting.wrapper import initialize
