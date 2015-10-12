@@ -27,6 +27,10 @@ class InvestmentBalance(Report):
 
         currency = get_currency()
 
+        purchases = dict()
+        dividends = dict()
+        values = dict()
+
         for split in account.GetSplitList():
             other_account_name = split.GetCorrAccountFullName()
             other_account = get_account(other_account_name)
@@ -34,25 +38,38 @@ class InvestmentBalance(Report):
             account_type = AccountTypes(other_account.GetType())
             date = datetime.fromtimestamp(split.parent.GetDate())
 
+            # Find the correct amount that was paid from the account into this account.
+            change_amount = get_decimal(split.GetValue())
+
+            if change_amount > 0:
+                # Need to get the value from the corr account split.
+                for parent_splits in split.parent.GetSplitList():
+                    if parent_splits.GetAccount().get_full_name() == other_account_name:
+                        change_amount = -get_decimal(parent_splits.GetValue())
+
             if account_type == AccountTypes.mutual_fund or account_type == AccountTypes.asset:
                 # Asset or mutual fund transfer
-                last_purchase += get_decimal(split.GetValue())
+                last_purchase += change_amount
             else:
                 last_dividend += get_decimal(split.GetValue())
 
             key = time.mktime(date.timetuple())
-            data['purchases'].append((key, last_purchase))
-            data['dividend'].append((key, last_dividend))
-            data['value'].append((key, get_balance_on_date(account, date, currency)))
+            purchases[key] = last_purchase
+            dividends[key] = last_dividend
+            values[key] = get_balance_on_date(account, date, currency)
 
         # Now get all of the price updates in the database.
         price_database = get_session().get_book().get_price_db()
         commodity = account.GetCommodity()
         for price in price_database.get_prices(commodity, None):
             date = time.mktime(price.get_time().timetuple())
-            data['value'].append((date, get_balance_on_date(account, price.get_time(), currency)))
 
-        data['value'] = sorted(data['value'], key=itemgetter(0))
+            values[date] = max(values.get(date, Decimal('0.0')),
+                               get_balance_on_date(account, price.get_time(), currency))
+
+        data['purchases'] = sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0))
+        data['dividend'] = sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0))
+        data['value'] = sorted([(key, value) for key, value in values.iteritems()], key=itemgetter(0))
 
         results = self._generate_result()
         results['data'] = data
