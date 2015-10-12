@@ -2,12 +2,17 @@
 Gather information about the balance of the investment accounts.
 """
 from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes
+from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnu_reporting.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes, \
+    account_walker, get_splits
+from gnu_reporting.collate.bucket import PeriodCollate
+from gnu_reporting.collate.key_generator import period
 from gnu_reporting.configuration.currency import get_currency
 from decimal import Decimal
 from operator import itemgetter
 import time
 from datetime import datetime
+from dateutils import relativedelta
 
 
 class InvestmentBalance(Report):
@@ -37,6 +42,14 @@ class InvestmentBalance(Report):
 
             account_type = AccountTypes(other_account.GetType())
             date = datetime.fromtimestamp(split.parent.GetDate())
+
+            # Store previous data
+            if len(purchases):
+                previous_date = date - relativedelta(days=1)
+                previous_date_key = time.mktime(previous_date.timetuple())
+                purchases[previous_date_key] = last_purchase
+                dividends[previous_date_key] = last_dividend
+                values[previous_date_key] = get_balance_on_date(account, previous_date, currency)
 
             # Find the correct amount that was paid from the account into this account.
             change_amount = get_decimal(split.GetValue())
@@ -76,6 +89,7 @@ class InvestmentBalance(Report):
 
         return results
 
+
 if __name__ == '__main__':
 
     from gnu_reporting.wrapper import initialize
@@ -85,7 +99,8 @@ if __name__ == '__main__':
     session = initialize('data/Accounts.gnucash')
     goal_amount = Decimal('500.00')
     try:
-        report = InvestmentBalance('Estimated Taxes', 'Assets.Investments.Vanguard.Brokerage Account.Mutual Funds.Tax-Managed Capital Appreciation Admiral Shares')
+        report = InvestmentBalance('Estimated Taxes',
+                                   'Assets.Investments.Vanguard.Brokerage Account.Mutual Funds.Tax-Managed Capital Appreciation Admiral Shares')
         payload = report()
         print json.dumps(payload)
     finally:
