@@ -6,7 +6,6 @@ from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
 from gnu_reporting.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes, \
     account_walker, get_splits
 from gnu_reporting.collate.bucket import PeriodCollate
-from gnu_reporting.collate.key_generator import period
 from gnu_reporting.configuration.currency import get_currency
 from gnu_reporting.configuration.investment_allocations import get_asset_allocation
 from decimal import Decimal
@@ -143,6 +142,7 @@ class InvestmentTrend(Report):
 
     def __call__(self):
 
+        investment_value = dict()
         buckets = PeriodCollate(self._period_start.date, self._period_end.date,
                                 investment_bucket_generator, store_investment, frequency=self._period_size.frequency,
                                 interval=self._period_size.interval)
@@ -156,6 +156,12 @@ class InvestmentTrend(Report):
                 buckets.store_value(split)
 
             start_value += get_balance_on_date(account, start_value_date, currency)
+
+            for key in buckets.container.keys():
+                date_value = key + relativedelta(months=1) - relativedelta(days=1)
+                investment_value[key] = investment_value.get(key, Decimal('0.0')) + get_balance_on_date(account,
+                                                                                                        date_value,
+                                                                                                        currency)
 
         results = self._generate_result()
         results['data']['start_value'] = start_value
@@ -171,6 +177,10 @@ class InvestmentTrend(Report):
         results['data']['expense'] = sorted(
             [(time.mktime(key.timetuple()), value['expense']) for key, value in buckets.container.iteritems()],
             key=itemgetter(0))
+
+        results['data']['value'] = sorted(
+            [[time.mktime(key.timetuple()), value] for key, value in investment_value.iteritems()],
+        )
 
         results['data']['basis'] = sorted(
             [[time.mktime(key.timetuple()), Decimal('0.0')] for key in buckets.container.keys()],
