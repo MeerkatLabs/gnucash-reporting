@@ -13,11 +13,16 @@ import time
 class IncomeVsExpense(Report):
     report_type = 'income_vs_expense'
 
-    def __init__(self, name, income_accounts, expense_accounts, period_start=PeriodStart.this_month_year_ago,
+    def __init__(self, name, income_accounts, expense_accounts, ignore_accounts=None,
+                 period_start=PeriodStart.this_month_year_ago,
                  period_end=PeriodEnd.this_month, period_size=PeriodSize.month):
         super(IncomeVsExpense, self).__init__(name)
         self._income = income_accounts
         self._expenses = expense_accounts
+        if ignore_accounts:
+            self._ignore_accounts = ignore_accounts
+        else:
+            self._ignore_accounts = []
         self._period_start = PeriodStart(period_start)
         self._period_end = PeriodEnd(period_end)
         self._period_size = PeriodSize(period_size)
@@ -28,7 +33,7 @@ class IncomeVsExpense(Report):
                                store_credit_debit, frequency=self._period_size.frequency,
                                interval=self._period_size.interval)
 
-        for account in account_walker(self._income + self._expenses):
+        for account in account_walker(self._income + self._expenses, ignore_list=self._ignore_accounts):
             for split in get_splits(account, self._period_start.date, self._period_end.date):
                 bucket.store_value(split)
 
