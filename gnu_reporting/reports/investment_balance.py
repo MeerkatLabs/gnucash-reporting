@@ -212,7 +212,8 @@ class InvestmentAllocation(Report):
                 breakdown[key] = breakdown.get(key, Decimal('0.0')) + value
 
         return_value = self._generate_result()
-        return_value['data']['categories'] = [[key, value] for key, value in breakdown.iteritems()]
+        return_value['data']['categories'] = sorted([[key, value] for key, value in breakdown.iteritems()],
+                                                    key=itemgetter(0))
 
         return return_value
 
