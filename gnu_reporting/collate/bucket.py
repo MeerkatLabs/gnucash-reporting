@@ -49,3 +49,12 @@ class CategoryCollate(BucketCollate):
                                               keys.category_key_fetcher,
                                               store_function)
 
+
+class AccountCollate(BucketCollate):
+    """
+    Collage all of the splits into buckets based on the category that their account is defined in.
+    """
+    def __init__(self, default_value_generator, store_function):
+        super(AccountCollate, self).__init__(generator.category_buckets(default_value_generator),
+                                             keys.account_key_fetcher,
+                                             store_function)

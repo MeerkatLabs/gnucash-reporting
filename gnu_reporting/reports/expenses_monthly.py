@@ -8,7 +8,7 @@ from gnu_reporting.reports.base import Report
 from gnu_reporting.wrapper import get_splits, account_walker
 from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
 from dateutil.relativedelta import relativedelta
-from gnu_reporting.collate.bucket import PeriodCollate, CategoryCollate
+from gnu_reporting.collate.bucket import PeriodCollate, CategoryCollate, AccountCollate
 from gnu_reporting.collate.store import split_summation, count
 from gnu_reporting.collate.bucket_generation import decimal_generator, integer_generator
 from operator import itemgetter
@@ -122,6 +122,37 @@ class ExpenseCategories(Report):
 
     def __call__(self):
         bucket = CategoryCollate(decimal_generator, split_summation)
+
+        for account in account_walker(self.expenses_base, self.ignore_list):
+            for split in get_splits(account, self._start.date, self._end.date):
+                bucket.store_value(split)
+
+        return_value = self._generate_result()
+
+        return_value['data']['categories'] = sorted([[key, value] for key, value in bucket.container.iteritems()],
+                                                    key=itemgetter(0))
+
+        return return_value
+
+
+class ExpenseAccounts(Report):
+    report_type = 'expense_accounts'
+
+    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_year.value,
+                 period_end=PeriodEnd.this_year.value):
+        super(ExpenseAccounts, self).__init__(name)
+        self.expenses_base = expenses_base
+
+        if ignore_list:
+            self.ignore_list = ignore_list
+        else:
+            self.ignore_list = []
+
+        self._start = PeriodStart(period_start)
+        self._end = PeriodEnd(period_end)
+
+    def __call__(self):
+        bucket = AccountCollate(decimal_generator, split_summation)
 
         for account in account_walker(self.expenses_base, self.ignore_list):
             for split in get_splits(account, self._start.date, self._end.date):

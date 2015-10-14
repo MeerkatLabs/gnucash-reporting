@@ -31,3 +31,12 @@ def category_key_fetcher(data_key):
     :return:
     """
     return get_category_for_account(data_key.GetAccount().get_full_name())
+
+
+def account_key_fetcher(data_key):
+    """
+    Look up the category that is associated with the account defined in the split.
+    :param data_key:  split
+    :return:
+    """
+    return data_key.GetAccount().get_full_name().split('.')[-1]
