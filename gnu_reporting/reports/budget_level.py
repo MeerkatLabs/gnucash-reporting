@@ -13,7 +13,7 @@ from datetime import date
 class BudgetLevel(Report):
     report_type = 'budget_level'
 
-    def __init__(self, name, account, budget_value, year_to_date=True):
+    def __init__(self, name, account, budget_value, ignore_accounts=None, year_to_date=True):
         super(BudgetLevel, self).__init__(name)
 
         if isinstance(account, basestring):
@@ -22,12 +22,16 @@ class BudgetLevel(Report):
         self.account_name = account
         self.budget_value = Decimal(budget_value)
 
+        if ignore_accounts is None:
+            ignore_accounts = []
+        self.ignore_accounts = ignore_accounts
+
         self._year_to_date = year_to_date
 
     def __call__(self):
         balance = Decimal('0.0')
 
-        for account in account_walker(self.account_name):
+        for account in account_walker(self.account_name, self.ignore_accounts):
             split_list = get_splits(account, PeriodStart.this_month.date, PeriodEnd.today.date, debit=False)
 
             for split in split_list:
@@ -44,7 +48,7 @@ class BudgetLevel(Report):
         if self._year_to_date:
             yearly_balance = Decimal('0.0')
 
-            for account in account_walker(self.account_name):
+            for account in account_walker(self.account_name, self.ignore_accounts):
                 split_list = get_splits(account, PeriodStart.this_year.date, PeriodEnd.this_year.date, debit=False)
 
                 for split in split_list:
