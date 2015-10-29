@@ -214,7 +214,7 @@ class InvestmentAllocation(Report):
 
         for account in account_walker(self._investment_accounts, self._ignore_accounts):
             balance = get_balance_on_date(account, today, currency)
-            commodity = account.GetCommodity().get_nice_symbol()
+            commodity = account.GetCommodity().get_mnemonic()
 
             results = get_asset_allocation(commodity, balance)
 
