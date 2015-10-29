@@ -4,7 +4,7 @@ Gather information about the balance of the investment accounts.
 from gnu_reporting.reports.base import Report
 from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
 from gnu_reporting.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes, \
-    account_walker, get_splits
+    account_walker, get_splits, get_corr_account_full_name
 from gnu_reporting.collate.bucket import PeriodCollate
 from gnu_reporting.configuration.currency import get_currency
 from gnu_reporting.configuration.investment_allocations import get_asset_allocation
@@ -37,7 +37,7 @@ class InvestmentBalance(Report):
         values = dict()
 
         for split in account.GetSplitList():
-            other_account_name = split.GetCorrAccountFullName()
+            other_account_name = get_corr_account_full_name(split)
             other_account = get_account(other_account_name)
 
             account_type = AccountTypes(other_account.GetType())
@@ -95,7 +95,7 @@ def investment_bucket_generator():
 
 
 def store_investment(bucket, value):
-    other_account_name = value.GetCorrAccountFullName()
+    other_account_name = get_corr_account_full_name(value)
     other_account = get_account(other_account_name)
 
     account_type = AccountTypes(other_account.GetType())

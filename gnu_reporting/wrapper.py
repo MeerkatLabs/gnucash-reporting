@@ -112,3 +112,29 @@ def get_balance_on_date(account, date_value, currency=None):
         balance = account.GetBalanceAsOfDate(today_time)
 
     return get_decimal(balance)
+
+
+def get_corr_account_full_name(split):
+    """
+    Iterate through the parent splits and return all of the accounts that have a value in the opposite sign of the value
+    in split.
+    :param split:
+    :return:
+    """
+    return_value = []
+
+    signed = get_decimal(split.GetValue()).is_signed()
+
+    for child_split in split.parent.GetSplitList():
+        split_value = get_decimal(child_split.GetValue())
+
+        if signed != split_value.is_signed():
+            return_value.append(child_split.GetAccount())
+
+    if not return_value:
+        raise RuntimeError('Couldn\'t find opposite accounts.')
+
+    if len(return_value) > 1:
+        raise RuntimeError('Split returned more than one correlating account')
+
+    return return_value[0].get_full_name()
