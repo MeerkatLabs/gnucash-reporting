@@ -20,7 +20,7 @@ class SavingsGoal(Report):
             account = [account]
 
         self.accounts = account
-        self.goal_amount = goal
+        self.goal_amount = Decimal(goal)
 
         self.as_of = PeriodStart(as_of)
 
