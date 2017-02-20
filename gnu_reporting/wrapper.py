@@ -64,7 +64,7 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
     for split in account.GetSplitList():
         split_date = split.parent.GetDate()
 
-        if start_time <= split_date < end_time:
+        if start_time <= split_date <= end_time:
 
             is_credit = split.GetAmount().num() > 0
 
