@@ -48,7 +48,10 @@ def get_account(account_name):
 
 
 def get_decimal(numeric):
-    return Decimal(numeric.num()) / Decimal(numeric.denom())
+    try:
+        return Decimal(numeric.num()) / Decimal(numeric.denom())
+    except TypeError:
+        return Decimal(numeric.num) / Decimal(numeric.denom)
 
 
 def get_splits(account, start_date, end_date=None, credit=True, debit=True):
@@ -106,12 +109,27 @@ def account_walker(account_list, ignore_list=None, place_holders=False, recursiv
 def get_balance_on_date(account, date_value, currency=None):
     today_time = time.mktime(date_value.timetuple())
 
-    if currency:
-        balance = account.GetBalanceAsOfDateInCurrency(today_time, currency, False)
-    else:
-        balance = account.GetBalanceAsOfDate(today_time)
+    balance = account.GetBalanceAsOfDate(today_time)
+    balance_decimal = get_decimal(balance)
 
-    return get_decimal(balance)
+    if currency:
+        account_commodity = account.GetCommodity()
+        price_db = gnucash_session.get_book().get_price_db()
+
+        # If the account_commodity and the currency are the same value, then just ignore fetching the value from the
+        # database.
+        if account_commodity.get_mnemonic() != currency.get_mnemonic():
+            # The API of this call is different than the get balance as of date, takes an actual date datetime object.
+            price = price_db.lookup_latest_before(account_commodity, currency, date_value)
+
+            # Just in case the price couldn't be found based on the date provided, use the nearest value, even if it's
+            # in the future.
+            if price is None:
+                price = price_db.lookup_nearest_in_time(account_commodity, currency, date_value)
+
+            balance_decimal *= get_decimal(price.get_value())
+
+    return balance_decimal
 
 
 def get_corr_account_full_name(split):
