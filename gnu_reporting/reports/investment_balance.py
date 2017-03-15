@@ -199,13 +199,18 @@ class InvestmentTrend(Report):
 class InvestmentAllocation(Report):
     report_type = 'investment_allocation'
 
-    def __init__(self, name, investment_accounts, ignore_accounts=None):
+    def __init__(self, name, investment_accounts, ignore_accounts=None, category_mapping=None):
         super(InvestmentAllocation, self).__init__(name)
         self._investment_accounts = investment_accounts
         if ignore_accounts:
             self._ignore_accounts = ignore_accounts
         else:
             self._ignore_accounts = []
+
+        if category_mapping:
+            self._category_mapping = category_mapping
+        else:
+            self._category_mapping = dict()
 
     def __call__(self):
         breakdown = dict()
@@ -222,7 +227,8 @@ class InvestmentAllocation(Report):
                 breakdown[key] = breakdown.get(key, Decimal('0.0')) + value
 
         return_value = self._generate_result()
-        return_value['data']['categories'] = sorted([[key, value] for key, value in breakdown.iteritems()],
+        return_value['data']['categories'] = sorted([[self._category_mapping.get(key, key), value]
+                                                     for key, value in breakdown.iteritems()],
                                                     key=itemgetter(0))
 
         return return_value
