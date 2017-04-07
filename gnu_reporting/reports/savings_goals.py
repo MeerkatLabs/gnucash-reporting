@@ -49,7 +49,7 @@ class SavingsGoal(Report):
                 total_balance += (balance * multiplier)
 
         for contribution in self.contributions:
-            total_balance += contribution
+            total_balance += Decimal(contribution)
 
         payload = self._generate_result()
         payload['data']['balance'] = total_balance
