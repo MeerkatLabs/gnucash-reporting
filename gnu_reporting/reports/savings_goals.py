@@ -94,7 +94,6 @@ class SavingsGoalTrend(Report):
 if __name__ == '__main__':
 
     from gnu_reporting.wrapper import initialize
-    from decimal import Decimal
 
     session = initialize('data/Accounts.gnucash')
     goal_amount = Decimal('25904.12')
