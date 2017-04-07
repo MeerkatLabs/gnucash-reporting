@@ -13,7 +13,7 @@ from decimal import Decimal
 class SavingsGoal(Report):
     report_type = 'savings_goal'
 
-    def __init__(self, name, account, goal, as_of=PeriodStart.today):
+    def __init__(self, name, account, goal, as_of=PeriodStart.today, contributions=None):
         super(SavingsGoal, self).__init__(name)
 
         if isinstance(account, basestring):
@@ -23,6 +23,13 @@ class SavingsGoal(Report):
         self.goal_amount = Decimal(goal)
 
         self.as_of = PeriodStart(as_of)
+
+        if not contributions:
+            contributions = []
+        elif type(contributions) != list:
+            contributions = [contributions]
+
+        self.contributions = contributions
 
     def __call__(self):
 
@@ -40,6 +47,9 @@ class SavingsGoal(Report):
             for account_name in account_walker([account]):
                 balance = get_balance_on_date(account_name, self.as_of.date, currency)
                 total_balance += (balance * multiplier)
+
+        for contribution in self.contributions:
+            total_balance += contribution
 
         payload = self._generate_result()
         payload['data']['balance'] = total_balance
