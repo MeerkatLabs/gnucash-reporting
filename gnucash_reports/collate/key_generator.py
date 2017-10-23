@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from gnu_reporting.configuration.expense_categories import get_category_for_account
+from gnucash_reports.configuration.expense_categories import get_category_for_account
 from dateutil.rrule import rrule, MONTHLY
 
 

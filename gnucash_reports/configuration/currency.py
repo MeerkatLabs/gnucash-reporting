@@ -1,7 +1,7 @@
 """
 Contains the details about the base currency of the application.
 """
-from gnu_reporting.wrapper import get_account
+from gnucash_reports.wrapper import get_account
 
 _currency = None
 

@@ -2,10 +2,10 @@ from datetime import datetime
 import time
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_decimal, get_account, get_balance_on_date, account_walker
-from gnu_reporting.periods import PeriodStart
-from gnu_reporting.configuration.currency import get_currency
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_decimal, get_account, get_balance_on_date, account_walker
+from gnucash_reports.periods import PeriodStart
+from gnucash_reports.configuration.currency import get_currency
 import simplejson as json
 from decimal import Decimal
 
@@ -93,7 +93,7 @@ class SavingsGoalTrend(Report):
 
 if __name__ == '__main__':
 
-    from gnu_reporting.wrapper import initialize
+    from gnucash_reports.wrapper import initialize
 
     session = initialize('data/Accounts.gnucash')
     goal_amount = Decimal('25904.12')

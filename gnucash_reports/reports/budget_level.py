@@ -1,10 +1,10 @@
 """
 Simple budget graph for this.
 """
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_decimal, get_splits, account_walker
-from gnu_reporting.configuration.expense_categories import get_accounts_for_category
-from gnu_reporting.periods import PeriodStart, PeriodEnd
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_decimal, get_splits, account_walker
+from gnucash_reports.configuration.expense_categories import get_accounts_for_category
+from gnucash_reports.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from calendar import monthrange
 from datetime import date
@@ -98,8 +98,7 @@ class BudgetPlanning(Report):
 
 if __name__ == '__main__':
 
-    from gnu_reporting.wrapper import initialize
-    from decimal import Decimal
+    from gnucash_reports.wrapper import initialize
     import simplejson as json
 
     session = initialize('data/Accounts.gnucash')

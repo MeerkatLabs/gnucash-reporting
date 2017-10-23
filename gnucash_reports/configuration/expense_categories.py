@@ -2,7 +2,7 @@
 Load the expense categories from the configuration file and provide a means to query the category name from the account
 that it is stored in.
 """
-from gnu_reporting.wrapper import account_walker
+from gnucash_reports.wrapper import account_walker
 
 _expense_categories = dict()
 _reverse = dict()

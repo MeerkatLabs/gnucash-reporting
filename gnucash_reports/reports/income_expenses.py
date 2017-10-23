@@ -1,12 +1,12 @@
 """
 Chart that will show the cash flow from income accounts to expense accounts.
 """
-from gnu_reporting.reports.base import Report
-from gnu_reporting.collate.bucket import PeriodCollate
-from gnu_reporting.collate.bucket_generation import debit_credit_generator
-from gnu_reporting.collate.store import store_credit_debit
-from gnu_reporting.periods import PeriodEnd, PeriodStart, PeriodSize
-from gnu_reporting.wrapper import get_balance_on_date, account_walker, get_splits, get_decimal
+from gnucash_reports.reports.base import Report
+from gnucash_reports.collate.bucket import PeriodCollate
+from gnucash_reports.collate.bucket_generation import debit_credit_generator
+from gnucash_reports.collate.store import store_credit_debit
+from gnucash_reports.periods import PeriodEnd, PeriodStart, PeriodSize
+from gnucash_reports.wrapper import get_balance_on_date, account_walker, get_splits, get_decimal
 import time
 
 

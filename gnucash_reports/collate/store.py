@@ -1,4 +1,4 @@
-from gnu_reporting.wrapper import get_decimal
+from gnucash_reports.wrapper import get_decimal
 from decimal import Decimal
 
 

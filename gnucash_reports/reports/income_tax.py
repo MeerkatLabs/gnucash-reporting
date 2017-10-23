@@ -3,10 +3,10 @@ Attempt to determine federal tax information.
 """
 from decimal import Decimal
 
-from gnu_reporting.configuration.tax_tables import calculate_tax
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_account, get_decimal, get_splits
-from gnu_reporting.periods import PeriodStart, PeriodEnd
+from gnucash_reports.configuration.tax_tables import calculate_tax
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_account, get_decimal, get_splits
+from gnucash_reports.periods import PeriodStart, PeriodEnd
 
 
 class IncomeTax(Report):

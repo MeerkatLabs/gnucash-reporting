@@ -1,12 +1,12 @@
 """
 Cash flow report for an account and it's children.
 """
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_splits, account_walker
-from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnu_reporting.collate.bucket_generation import debit_credit_generator
-from gnu_reporting.collate.store import store_credit_debit
-from gnu_reporting.collate.bucket import PeriodCollate
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_splits, account_walker
+from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnucash_reports.collate.bucket_generation import debit_credit_generator
+from gnucash_reports.collate.store import store_credit_debit
+from gnucash_reports.collate.bucket import PeriodCollate
 import time
 
 
@@ -50,7 +50,7 @@ class MonthlyCashFlow(Report):
 
 if __name__ == '__main__':
     import simplejson as json
-    from gnu_reporting.wrapper import initialize
+    from gnucash_reports.wrapper import initialize
 
     session = initialize('data/Accounts.gnucash')
 

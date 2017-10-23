@@ -1,18 +1,17 @@
 """
 Gathers up all of the expenses and breaks down the values by month.
 """
-from datetime import datetime
 import time
-
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_splits, account_walker
-from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
-from dateutil.relativedelta import relativedelta
-from gnu_reporting.collate.bucket import PeriodCollate, CategoryCollate, AccountCollate
-from gnu_reporting.collate.store import split_summation, count
-from gnu_reporting.collate.bucket_generation import decimal_generator, integer_generator
 from operator import itemgetter
+
 import numpy as np
+
+from gnucash_reports.collate.bucket import PeriodCollate, CategoryCollate, AccountCollate
+from gnucash_reports.collate.bucket_generation import decimal_generator, integer_generator
+from gnucash_reports.collate.store import split_summation, count
+from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_splits, account_walker
 
 
 class ExpensesMonthly(Report):
@@ -168,7 +167,7 @@ class ExpenseAccounts(Report):
 if __name__ == '__main__':
 
     import simplejson as json
-    from gnu_reporting.wrapper import initialize
+    from gnucash_reports.wrapper import initialize
 
     session = initialize('data/Accounts.gnucash')
 

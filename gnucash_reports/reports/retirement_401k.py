@@ -2,9 +2,9 @@
 This report needs to go through all of the income transactions and look for credits that are made to the 401k of the
 owner.
 """
-from gnu_reporting.reports.base import Report
-from gnu_reporting.wrapper import get_account, get_decimal, get_splits
-from gnu_reporting.periods import PeriodStart, PeriodEnd
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_account, get_decimal, get_splits
+from gnucash_reports.periods import PeriodStart, PeriodEnd
 from datetime import date
 from decimal import Decimal
 

@@ -4,15 +4,15 @@ Calculator that will go through and calculate the net worth of the accounts.
 from datetime import date
 import time
 
-from gnu_reporting.wrapper import account_walker, get_decimal, get_balance_on_date
-from gnu_reporting.configuration.currency import get_currency
-from gnu_reporting.configuration.inflation import get_monthly_inflation
-from gnu_reporting.reports.base import Report
-from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnucash_reports.wrapper import account_walker, get_decimal, get_balance_on_date
+from gnucash_reports.configuration.currency import get_currency
+from gnucash_reports.configuration.inflation import get_monthly_inflation
+from gnucash_reports.reports.base import Report
+from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
 from dateutils import relativedelta
-from gnu_reporting.collate.bucket import PeriodCollate
-from gnu_reporting.collate.store import split_summation
-from gnu_reporting.collate.bucket_generation import decimal_generator
+from gnucash_reports.collate.bucket import PeriodCollate
+from gnucash_reports.collate.store import split_summation
+from gnucash_reports.collate.bucket_generation import decimal_generator
 from calendar import monthrange
 from decimal import Decimal
 
@@ -214,7 +214,7 @@ class NetWorthTable(Report):
 
 if __name__ == '__main__':
 
-    from gnu_reporting.wrapper import initialize
+    from gnucash_reports.wrapper import initialize
     import simplejson as json
 
     session = initialize('data/Accounts.gnucash')

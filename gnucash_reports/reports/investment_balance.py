@@ -1,13 +1,13 @@
 """
 Gather information about the balance of the investment accounts.
 """
-from gnu_reporting.reports.base import Report
-from gnu_reporting.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnu_reporting.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes, \
+from gnucash_reports.reports.base import Report
+from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnucash_reports.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes, \
     account_walker, get_splits, get_corr_account_full_name
-from gnu_reporting.collate.bucket import PeriodCollate
-from gnu_reporting.configuration.currency import get_currency
-from gnu_reporting.configuration.investment_allocations import get_asset_allocation
+from gnucash_reports.collate.bucket import PeriodCollate
+from gnucash_reports.configuration.currency import get_currency
+from gnucash_reports.configuration.investment_allocations import get_asset_allocation
 from decimal import Decimal
 from operator import itemgetter
 import time
@@ -236,8 +236,7 @@ class InvestmentAllocation(Report):
 
 if __name__ == '__main__':
 
-    from gnu_reporting.wrapper import initialize
-    from decimal import Decimal
+    from gnucash_reports.wrapper import initialize
     import simplejson as json
 
     session = initialize('data/Accounts.gnucash')
