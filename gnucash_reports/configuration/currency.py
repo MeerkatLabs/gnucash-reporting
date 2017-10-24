@@ -10,7 +10,7 @@ def configure(json_configuration):
     global _currency
     account_name = json_configuration.get('currency', dict()).get('account_name', 'Income')
 
-    _currency = get_account(account_name).GetCommodity()
+    _currency = get_account(account_name).commodity
 
 
 def get_currency():

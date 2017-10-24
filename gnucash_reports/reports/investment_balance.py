@@ -3,7 +3,7 @@ Gather information about the balance of the investment accounts.
 """
 from gnucash_reports.reports.base import Report
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnucash_reports.wrapper import get_account, get_decimal, get_session, get_balance_on_date, AccountTypes, \
+from gnucash_reports.wrapper import get_account, get_session, get_balance_on_date, AccountTypes, \
     account_walker, get_splits, get_corr_account_full_name
 from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.configuration.currency import get_currency
@@ -36,12 +36,12 @@ class InvestmentBalance(Report):
         dividends = dict()
         values = dict()
 
-        for split in account.GetSplitList():
+        for split in account.splits:
             other_account_name = get_corr_account_full_name(split)
             other_account = get_account(other_account_name)
 
-            account_type = AccountTypes(other_account.GetType())
-            date = datetime.fromtimestamp(split.parent.GetDate())
+            account_type = AccountTypes(other_account.type.upper())
+            date = split.transaction.post_date
 
             # Store previous data
             if len(purchases):
@@ -52,19 +52,19 @@ class InvestmentBalance(Report):
                 values[previous_date_key] = get_balance_on_date(account, previous_date, currency)
 
             # Find the correct amount that was paid from the account into this account.
-            change_amount = get_decimal(split.GetValue())
+            change_amount = split.value
 
             if change_amount > 0:
                 # Need to get the value from the corr account split.
-                for parent_splits in split.parent.GetSplitList():
-                    if parent_splits.GetAccount().get_full_name() == other_account_name:
-                        change_amount = -get_decimal(parent_splits.GetValue())
+                for parent_splits in split.transaction.splits:
+                    if parent_splits.account.fullname == other_account_name:
+                        change_amount = -parent_splits.value
 
             if account_type == AccountTypes.mutual_fund or account_type == AccountTypes.asset:
                 # Asset or mutual fund transfer
                 last_purchase += change_amount
             else:
-                last_dividend += get_decimal(split.GetValue())
+                last_dividend += split.value
 
             key = time.mktime(date.timetuple())
             purchases[key] = last_purchase
@@ -73,7 +73,7 @@ class InvestmentBalance(Report):
 
         # Now get all of the price updates in the database.
         price_database = get_session().get_book().get_price_db()
-        commodity = account.GetCommodity()
+        commodity = account.commodity
         for price in price_database.get_prices(commodity, None):
             date = time.mktime(price.get_time().timetuple())
 
@@ -98,25 +98,25 @@ def store_investment(bucket, value):
     other_account_name = get_corr_account_full_name(value)
     other_account = get_account(other_account_name)
 
-    account_type = AccountTypes(other_account.GetType())
+    account_type = AccountTypes(other_account.type.upper())
 
     # Find the correct amount that was paid from the account into this account.
-    change_amount = get_decimal(value.GetValue())
+    change_amount = value.value
 
     if change_amount > 0:
         # Need to get the value from the corr account split.
-        for parent_splits in value.parent.GetSplitList():
-            if parent_splits.GetAccount().get_full_name() == other_account_name:
-                change_amount = -get_decimal(parent_splits.GetValue())
+        for parent_splits in value.parent.splits:
+            if parent_splits.account.fullname == other_account_name:
+                change_amount = -parent_splits.value
 
     if account_type == AccountTypes.mutual_fund or account_type == AccountTypes.asset or \
        account_type == AccountTypes.equity:
         # Asset or mutual fund transfer
         bucket['money_in'] += change_amount
     elif account_type == AccountTypes.income:
-        bucket['income'] += get_decimal(value.GetValue())
+        bucket['income'] += value.value
     elif account_type == AccountTypes.expense:
-        bucket['expense'] += get_decimal(value.GetValue())
+        bucket['expense'] += value.value
     else:
         print 'Unknown account type: %s' % account_type
 
@@ -219,7 +219,7 @@ class InvestmentAllocation(Report):
 
         for account in account_walker(self._investment_accounts, self._ignore_accounts):
             balance = get_balance_on_date(account, today, currency)
-            commodity = account.GetCommodity().get_mnemonic()
+            commodity = account.commodity.mnemonic
 
             results = get_asset_allocation(commodity, balance)
 

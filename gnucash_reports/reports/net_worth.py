@@ -145,7 +145,6 @@ class NetWorthTable(Report):
             except:
                 net_worth_data['deltas'].append('N/A')
 
-
         results = self._generate_result()
         results['data']['trend'] = [time.mktime(t.timetuple()) for t in trend_months]
         results['data']['deltas'] = self._deltas
