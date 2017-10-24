@@ -1,13 +1,14 @@
 """
 Cash flow report for an account and it's children.
 """
-from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_splits, account_walker
-from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
+import time
+
+from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.collate.bucket_generation import debit_credit_generator
 from gnucash_reports.collate.store import store_credit_debit
-from gnucash_reports.collate.bucket import PeriodCollate
-import time
+from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_splits, account_walker
 
 
 class MonthlyCashFlow(Report):

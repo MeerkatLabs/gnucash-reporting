@@ -1,13 +1,15 @@
-from datetime import datetime
 import time
-from dateutil.rrule import rrule, MONTHLY
+from datetime import datetime
+from decimal import Decimal
+
+import simplejson as json
 from dateutil.relativedelta import relativedelta
+from dateutil.rrule import rrule, MONTHLY
+
+from gnucash_reports.configuration.currency import get_currency
+from gnucash_reports.periods import PeriodStart
 from gnucash_reports.reports.base import Report
 from gnucash_reports.wrapper import get_account, get_balance_on_date, account_walker
-from gnucash_reports.periods import PeriodStart
-from gnucash_reports.configuration.currency import get_currency
-import simplejson as json
-from decimal import Decimal
 
 
 class SavingsGoal(Report):

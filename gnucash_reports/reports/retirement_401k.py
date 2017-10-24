@@ -2,11 +2,12 @@
 This report needs to go through all of the income transactions and look for credits that are made to the 401k of the
 owner.
 """
-from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_account, get_splits
-from gnucash_reports.periods import PeriodStart, PeriodEnd
 from datetime import date
 from decimal import Decimal
+
+from gnucash_reports.periods import PeriodStart, PeriodEnd
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_account, get_splits
 
 
 class Retirement401kReport(Report):

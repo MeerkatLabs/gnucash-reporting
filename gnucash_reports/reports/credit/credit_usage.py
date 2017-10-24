@@ -1,12 +1,13 @@
 """
 Report that will show the amount of credit available, vs. currently used.
 """
-from gnucash_reports.wrapper import get_account, account_walker, get_balance_on_date
-from gnucash_reports.periods import PeriodStart
-from gnucash_reports.configuration.currency import get_currency
-from gnucash_reports.reports.base import Report
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
+from gnucash_reports.configuration.currency import get_currency
+from gnucash_reports.periods import PeriodStart
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_account, account_walker, get_balance_on_date
 
 
 class CreditUsage(Report):

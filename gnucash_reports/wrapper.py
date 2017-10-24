@@ -1,8 +1,9 @@
+from datetime import datetime
+from decimal import Decimal
+
+import enum
 import piecash
 import re
-from datetime import datetime
-import enum
-from decimal import Decimal
 
 
 @enum.unique

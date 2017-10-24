@@ -1,7 +1,7 @@
-from decimal import Decimal
-from dateutil.rrule import rrule, MONTHLY
-from datetime import date
 from collections import defaultdict
+from decimal import Decimal
+
+from dateutil.rrule import rrule, MONTHLY
 
 
 def decimal_generator():

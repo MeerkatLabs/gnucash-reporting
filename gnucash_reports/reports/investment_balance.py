@@ -1,18 +1,20 @@
 """
 Gather information about the balance of the investment accounts.
 """
-from gnucash_reports.reports.base import Report
-from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnucash_reports.wrapper import get_account, get_balance_on_date, AccountTypes, \
-    account_walker, get_splits, get_corr_account_full_name, get_prices
+import time
+from datetime import datetime
+from decimal import Decimal
+from operator import itemgetter
+
+from dateutils import relativedelta
+
 from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.configuration.investment_allocations import get_asset_allocation
-from decimal import Decimal
-from operator import itemgetter
-import time
-from datetime import datetime
-from dateutils import relativedelta
+from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_account, get_balance_on_date, AccountTypes, \
+    account_walker, get_splits, get_corr_account_full_name, get_prices
 
 
 class InvestmentBalance(Report):

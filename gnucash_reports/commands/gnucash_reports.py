@@ -2,15 +2,17 @@
 This is the main execution program for the reporting library.
 """
 from __future__ import absolute_import
+
 import argparse
-import sys
-import os
-import simplejson as json
 import glob
 import logging
-from yaml import load, dump
+import sys
+
+import os
 import os.path
-import time
+import simplejson as json
+from yaml import load
+
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:

@@ -1,13 +1,14 @@
 """
 Simple budget graph for this.
 """
-from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_splits, account_walker
-from gnucash_reports.configuration.expense_categories import get_accounts_for_category
-from gnucash_reports.periods import PeriodStart, PeriodEnd
-from decimal import Decimal
 from calendar import monthrange
 from datetime import date
+from decimal import Decimal
+
+from gnucash_reports.configuration.expense_categories import get_accounts_for_category
+from gnucash_reports.periods import PeriodStart, PeriodEnd
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import get_splits, account_walker
 
 
 class BudgetLevel(Report):

@@ -1,7 +1,9 @@
 from datetime import date
-from gnucash_reports.configuration.expense_categories import get_category_for_account
-from dateutil.rrule import rrule, MONTHLY
+
 import re
+from dateutil.rrule import rrule, MONTHLY
+
+from gnucash_reports.configuration.expense_categories import get_category_for_account
 
 
 def monthly(data_key):

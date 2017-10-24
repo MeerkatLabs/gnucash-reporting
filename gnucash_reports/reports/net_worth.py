@@ -1,20 +1,21 @@
 """
 Calculator that will go through and calculate the net worth of the accounts.
 """
-from datetime import date
 import time
+from calendar import monthrange
+from datetime import date
+from decimal import Decimal
 
-from gnucash_reports.wrapper import account_walker, get_balance_on_date
+from dateutils import relativedelta
+
+from gnucash_reports.collate.bucket import PeriodCollate
+from gnucash_reports.collate.bucket_generation import decimal_generator
+from gnucash_reports.collate.store import split_summation
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.configuration.inflation import get_monthly_inflation
-from gnucash_reports.reports.base import Report
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
-from dateutils import relativedelta
-from gnucash_reports.collate.bucket import PeriodCollate
-from gnucash_reports.collate.store import split_summation
-from gnucash_reports.collate.bucket_generation import decimal_generator
-from calendar import monthrange
-from decimal import Decimal
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import account_walker, get_balance_on_date
 
 
 class NetWorthCalculator(Report):

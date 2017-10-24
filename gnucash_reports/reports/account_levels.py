@@ -1,9 +1,9 @@
 """
 Collection of reports that will warn when the level of an account gets to be low.
 """
+from gnucash_reports.periods import PeriodStart
 from gnucash_reports.reports.base import Report
 from gnucash_reports.wrapper import get_account, get_balance_on_date
-from gnucash_reports.periods import PeriodStart
 
 
 class AccountLevels(Report):

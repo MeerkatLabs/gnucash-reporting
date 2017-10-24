@@ -1,6 +1,7 @@
+from dateutil.rrule import MONTHLY
+
 import bucket_generation as generator
 import key_generator as keys
-from dateutil.rrule import MONTHLY
 
 
 class BucketCollate(object):

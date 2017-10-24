@@ -4,9 +4,9 @@ Attempt to determine federal tax information.
 from decimal import Decimal
 
 from gnucash_reports.configuration.tax_tables import calculate_tax
+from gnucash_reports.periods import PeriodStart, PeriodEnd
 from gnucash_reports.reports.base import Report
 from gnucash_reports.wrapper import get_account, get_splits
-from gnucash_reports.periods import PeriodStart, PeriodEnd
 
 
 class IncomeTax(Report):

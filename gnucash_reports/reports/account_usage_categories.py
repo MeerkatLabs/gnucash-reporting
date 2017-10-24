@@ -2,12 +2,13 @@
 Iterate through all of the accounts provided and give a categorized record of the expenses that have been charged to
 that account.
 """
-from gnucash_reports.configuration.expense_categories import get_category_for_account
-from gnucash_reports.wrapper import account_walker, get_splits
-from gnucash_reports.reports.base import Report
-from gnucash_reports.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from operator import itemgetter
+
+from gnucash_reports.configuration.expense_categories import get_category_for_account
+from gnucash_reports.periods import PeriodStart, PeriodEnd
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import account_walker, get_splits
 
 
 class AccountUsageCategories(Report):
