@@ -2,7 +2,7 @@
 Simple budget graph for this.
 """
 from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_decimal, get_splits, account_walker
+from gnucash_reports.wrapper import get_splits, account_walker
 from gnucash_reports.configuration.expense_categories import get_accounts_for_category
 from gnucash_reports.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
@@ -35,7 +35,7 @@ class BudgetLevel(Report):
             split_list = get_splits(account, PeriodStart.this_month.date, PeriodEnd.today.date, debit=False)
 
             for split in split_list:
-                balance += get_decimal(split.GetAmount())
+                balance += split.value
 
         payload = self._generate_result()
         payload['data']['balance'] = balance
@@ -52,7 +52,7 @@ class BudgetLevel(Report):
                 split_list = get_splits(account, PeriodStart.this_year.date, PeriodEnd.this_year.date, debit=False)
 
                 for split in split_list:
-                    yearly_balance += get_decimal(split.GetAmount())
+                    yearly_balance += split.value
 
             today = date.today()
             payload['data']['yearlyBalance'] = yearly_balance

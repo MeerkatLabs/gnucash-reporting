@@ -3,7 +3,7 @@ import time
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_decimal, get_account, get_balance_on_date, account_walker
+from gnucash_reports.wrapper import get_account, get_balance_on_date, account_walker
 from gnucash_reports.periods import PeriodStart
 from gnucash_reports.configuration.currency import get_currency
 import simplejson as json
@@ -84,9 +84,9 @@ class SavingsGoalTrend(Report):
         for dt in rrule(MONTHLY, dtstart=start_of_trend, until=end_of_trend):
             time_value = time.mktime(dt.timetuple())
 
-            balance = account.GetBalanceAsOfDate(time_value)
+            balance = get_balance_on_date(account, time_value)
             payload['data']['trend'].append(dict(date=dt.strftime('%Y-%m-%d'),
-                                                 balance=get_decimal(balance)))
+                                                 balance=balance))
 
         return payload
 

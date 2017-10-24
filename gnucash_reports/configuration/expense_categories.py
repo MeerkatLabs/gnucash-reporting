@@ -26,7 +26,7 @@ def configure(json_dictionary):
             all_accounts = []
             for account in account_walker(accounts, place_holders=True):
                 # print 'loading account: %s' % account.fullname
-                all_accounts.append(account.fullname)
+                all_accounts.append(account.fullname.replace(':', '.'))
         else:
             all_accounts = accounts
 

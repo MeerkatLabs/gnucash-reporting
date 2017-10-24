@@ -2,6 +2,7 @@ import piecash
 import re
 from datetime import datetime
 import enum
+from decimal import Decimal
 
 
 @enum.unique
@@ -13,7 +14,7 @@ class AccountTypes(enum.Enum):
     asset = 'ASSET'
     liability = 'LIABILITY'
     stock = 'STOCK'
-    mutual_fund = 'MUTUAL_FUND'
+    mutual_fund = 'MUTUAL'
     currency = 'CURRENCY'
     income = 'INCOME'
     expense = 'EXPENSE'
@@ -52,28 +53,23 @@ def get_account(account_name):
     return current_account
 
 
-def get_decimal(numeric):
-    raise NotImplementedError('Stop using this code')
-    # try:
-    #     return Decimal(numeric.num()) / Decimal(numeric.denom())
-    # except TypeError:
-    #     return Decimal(numeric.num) / Decimal(numeric.denom)
-
-
 def get_splits(account, start_date, end_date=None, credit=True, debit=True):
 
     start_time = datetime.combine(start_date, datetime.min.time())
     if not end_date:
         end_date = datetime.today()
 
-    end_time = datetime.combine(end_date, datetime.min.time())
+    end_time = datetime.combine(end_date, datetime.max.time())
+
+    start_time = start_time.replace(microsecond=0, tzinfo=None)
+    end_time = end_time.replace(microsecond=0, tzinfo=None)
 
     result = []
 
     split_query = gnucash_session.session.query(piecash.Split).filter(
         piecash.Split.account == account,
-        piecash.Split.transaction.has(piecash.Transaction.post_date <= start_time),
-        piecash.Split.transaction.has(piecash.Transaction.post_date >= end_time)
+        piecash.Split.transaction.has(piecash.Transaction.post_date >= start_time),
+        piecash.Split.transaction.has(piecash.Transaction.post_date <= end_time)
     )
 
     for split in split_query:
@@ -113,63 +109,40 @@ def account_walker(account_list, ignore_list=None, place_holders=False, recursiv
         if recursive:
             _account_list += [a.fullname for a in account.children]
 
-        break
-
 
 def get_balance_on_date(account, date_value, currency=None):
 
-    date_value = datetime.combine(date_value, datetime.min.time())
+    date_value = datetime.combine(date_value, datetime.max.time()).replace(microsecond=0, tzinfo=None)
 
-    split_query = gnucash_session.session.query(piecash.Split).filter(
+    splits = gnucash_session.session.query(piecash.Split).filter(
+        piecash.Split.account == account,
         piecash.Split.transaction.has(piecash.Transaction.post_date < date_value)
-    )
+    ).all()
 
-    balance_decimal = sum([s.value for s in split_query]) * account.sign
+    if splits:
+        balance_decimal = sum([s.quantity for s in splits])
 
-    if currency:
-        # If the account_commodity and the currency are the same value, then just ignore fetching the value from the
-        # database.
-        if currency.mnemonic != account.commodity.mnemonic:
+        if currency:
+            # If the account_commodity and the currency are the same value, then just ignore fetching the value from the
+            # database.
+            if currency.mnemonic != account.commodity.mnemonic:
 
-            print currency.mnemonic
-            print account.commodity.mnemonic
+                price_value = gnucash_session.session.query(piecash.Price).filter(
+                    piecash.Price.commodity == account.commodity,
+                    piecash.Price.currency == currency,
+                    piecash.Price.date <= date_value,
+                ).order_by(piecash.Price.date.desc()).limit(1).one_or_none()
 
-            print date_value
-
-            price_value = gnucash_session.session.query(piecash.Price).filter(
-                piecash.Price.commodity == account.commodity,
-                piecash.Price.date <= date_value
-            ).order_by(piecash.Price.date.desc()).limit(1).one_or_none()
-
-            print price_value
-
-            raise NotImplemented('Not implemented yet')
+                if price_value:
+                    # print date_value, account.fullname, balance_decimal, price_value.value
+                    balance_decimal = balance_decimal * price_value.value
+                else:
+                    print currency, account.commodity, date_value
+                    raise NotImplementedError('Couldn\'t find a valid value')
+    else:
+        balance_decimal = Decimal(0.0)
 
     return balance_decimal
-
-    # today_time = time.mktime(date_value.timetuple())
-    #
-    # balance = account.GetBalanceAsOfDate(today_time)
-    # balance_decimal = get_decimal(balance)
-    #
-    # if currency:
-    #     account_commodity = account.GetCommodity()
-    #     price_db = gnucash_session.get_book().get_price_db()
-    #
-    #     # If the account_commodity and the currency are the same value, then just ignore fetching the value from the
-    #     # database.
-    #     if account_commodity.get_mnemonic() != currency.get_mnemonic():
-    #         # The API of this call is different than the get balance as of date, takes an actual date datetime object.
-    #         price = price_db.lookup_latest_before(account_commodity, currency, date_value)
-    #
-    #         # Just in case the price couldn't be found based on the date provided, use the nearest value, even if it's
-    #         # in the future.
-    #         if price is None:
-    #             price = price_db.lookup_nearest_in_time(account_commodity, currency, date_value)
-    #
-    #         balance_decimal *= get_decimal(price.get_value())
-    #
-    # return balance_decimal
 
 
 def get_corr_account_full_name(split):
@@ -193,6 +166,22 @@ def get_corr_account_full_name(split):
         raise RuntimeError('Couldn\'t find opposite accounts.')
 
     if len(return_value) > 1:
+        print 'return_value: ', return_value
         raise RuntimeError('Split returned more than one correlating account')
 
     return return_value[0].fullname
+
+
+def get_prices(commodity, currency):
+    """
+    Return all of the prices for a specific commodity in the currency provided.
+    :param commodity:
+    :param currency:
+    :return:
+    """
+    price_list = gnucash_session.session.query(piecash.Price).filter(
+        piecash.Price.commodity == commodity,
+        piecash.Price.currency == currency
+        ).order_by(piecash.Price.date.desc()).all()
+
+    return price_list

@@ -1,6 +1,7 @@
-from datetime import date, datetime
+from datetime import date
 from gnucash_reports.configuration.expense_categories import get_category_for_account
 from dateutil.rrule import rrule, MONTHLY
+import re
 
 
 def monthly(data_key):
@@ -9,7 +10,7 @@ def monthly(data_key):
     :param data_key: data key value.
     :return: hash key value.
     """
-    split_date = datetime.fromtimestamp(data_key.parent.GetDate())
+    split_date = data_key.transaction.post_date.replace(tzinfo=None, microsecond=0)
     return date(split_date.year, split_date.month, 1)
 
 
@@ -18,7 +19,7 @@ def period(start, end, frequency=MONTHLY, interval=1):
     intervals = rrule(frequency, start, interval=interval, until=end)
 
     def method(data_key):
-        split_date = datetime.fromtimestamp(data_key.parent.GetDate())
+        split_date = data_key.transaction.post_date.replace(tzinfo=None, microsecond=0)
         return intervals.before(split_date, inc=True).date()
 
     return method
@@ -30,7 +31,7 @@ def category_key_fetcher(data_key):
     :param data_key:  split
     :return:
     """
-    return get_category_for_account(data_key.GetAccount().get_full_name())
+    return get_category_for_account(data_key.account.fullname.replace(':', '.'))
 
 
 def account_key_fetcher(data_key):
@@ -39,4 +40,4 @@ def account_key_fetcher(data_key):
     :param data_key:  split
     :return:
     """
-    return data_key.GetAccount().get_full_name().split('.')[-1]
+    return re.split('[:.]', data_key.account.fullname)[-1]

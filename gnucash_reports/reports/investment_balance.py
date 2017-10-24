@@ -3,8 +3,8 @@ Gather information about the balance of the investment accounts.
 """
 from gnucash_reports.reports.base import Report
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnucash_reports.wrapper import get_account, get_session, get_balance_on_date, AccountTypes, \
-    account_walker, get_splits, get_corr_account_full_name
+from gnucash_reports.wrapper import get_account, get_balance_on_date, AccountTypes, \
+    account_walker, get_splits, get_corr_account_full_name, get_prices
 from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.configuration.investment_allocations import get_asset_allocation
@@ -36,7 +36,7 @@ class InvestmentBalance(Report):
         dividends = dict()
         values = dict()
 
-        for split in account.splits:
+        for split in sorted(account.splits, key=lambda x: x.transaction.post_date):
             other_account_name = get_corr_account_full_name(split)
             other_account = get_account(other_account_name)
 
@@ -72,13 +72,11 @@ class InvestmentBalance(Report):
             values[key] = get_balance_on_date(account, date, currency)
 
         # Now get all of the price updates in the database.
-        price_database = get_session().get_book().get_price_db()
-        commodity = account.commodity
-        for price in price_database.get_prices(commodity, None):
-            date = time.mktime(price.get_time().timetuple())
+        for price in get_prices(account.commodity, currency):
+            date = time.mktime(price.date.timetuple())
 
             values[date] = max(values.get(date, Decimal('0.0')),
-                               get_balance_on_date(account, price.get_time(), currency))
+                               get_balance_on_date(account, price.date, currency))
 
         data['purchases'] = sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0))
         data['dividend'] = sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0))
@@ -105,7 +103,7 @@ def store_investment(bucket, value):
 
     if change_amount > 0:
         # Need to get the value from the corr account split.
-        for parent_splits in value.parent.splits:
+        for parent_splits in value.transaction.splits:
             if parent_splits.account.fullname == other_account_name:
                 change_amount = -parent_splits.value
 

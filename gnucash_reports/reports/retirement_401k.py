@@ -3,7 +3,7 @@ This report needs to go through all of the income transactions and look for cred
 owner.
 """
 from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_account, get_decimal, get_splits
+from gnucash_reports.wrapper import get_account, get_splits
 from gnucash_reports.periods import PeriodStart, PeriodEnd
 from datetime import date
 from decimal import Decimal
@@ -36,12 +36,12 @@ class Retirement401kReport(Report):
             account = get_account(account_name)
 
             for split in get_splits(account, self._start.date, self._end.date):
-                parent = split.parent
+                parent = split.transaction
 
-                for income_split in parent.GetSplitList():
+                for income_split in parent.splits:
 
-                    if income_split.GetAccount().get_full_name() in self.retirement_accounts:
-                        contribution_total += get_decimal(income_split.GetAmount())
+                    if income_split.account.fullname in self.retirement_accounts:
+                        contribution_total += income_split.value
 
         result = self._generate_result()
         result['data']['contributionLimit'] = self.contribution_limit

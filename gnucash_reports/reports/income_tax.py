@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from gnucash_reports.configuration.tax_tables import calculate_tax
 from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_account, get_decimal, get_splits
+from gnucash_reports.wrapper import get_account, get_splits
 from gnucash_reports.periods import PeriodStart, PeriodEnd
 
 
@@ -32,13 +32,13 @@ class IncomeTax(Report):
             account = get_account(account_name)
 
             for split in get_splits(account, self._start.date, self._end.date):
-                value = get_decimal(split.GetAmount()) * -1
+                value = split.value * -1
                 total_income += value
 
         for account_name in self.tax_accounts:
             account = get_account(account_name)
             for split in get_splits(account,  self._start.date, self._end.date):
-                value = get_decimal(split.GetAmount())
+                value = split.value
                 total_taxes += value
 
         tax_value = calculate_tax(self._tax_name, self._tax_status, total_income)

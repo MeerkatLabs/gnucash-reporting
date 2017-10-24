@@ -1,13 +1,14 @@
 """
 Chart that will show the cash flow from income accounts to expense accounts.
 """
-from gnucash_reports.reports.base import Report
+import time
+
 from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.collate.bucket_generation import debit_credit_generator
 from gnucash_reports.collate.store import store_credit_debit
 from gnucash_reports.periods import PeriodEnd, PeriodStart, PeriodSize
-from gnucash_reports.wrapper import get_balance_on_date, account_walker, get_splits, get_decimal
-import time
+from gnucash_reports.reports.base import Report
+from gnucash_reports.wrapper import account_walker, get_splits
 
 
 class IncomeVsExpense(Report):

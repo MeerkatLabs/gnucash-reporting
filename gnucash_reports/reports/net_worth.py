@@ -4,7 +4,7 @@ Calculator that will go through and calculate the net worth of the accounts.
 from datetime import date
 import time
 
-from gnucash_reports.wrapper import account_walker, get_decimal, get_balance_on_date
+from gnucash_reports.wrapper import account_walker, get_balance_on_date
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.configuration.inflation import get_monthly_inflation
 from gnucash_reports.reports.base import Report

@@ -3,7 +3,7 @@ Iterate through all of the accounts provided and give a categorized record of th
 that account.
 """
 from gnucash_reports.configuration.expense_categories import get_category_for_account
-from gnucash_reports.wrapper import get_decimal, account_walker, get_splits
+from gnucash_reports.wrapper import account_walker, get_splits
 from gnucash_reports.reports.base import Report
 from gnucash_reports.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
@@ -29,15 +29,15 @@ class AccountUsageCategories(Report):
         for account in account_walker(self._accounts):
             for split in get_splits(account, start_of_trend, end_of_trend, credit=False):
 
-                transaction = split.parent
+                transaction = split.transaction
 
-                for transaction_split in transaction.GetSplitList():
-                    transaction_account_name = transaction_split.GetAccount().get_full_name()
-                    if transaction_account_name != account.get_full_name():
+                for transaction_split in transaction.splits:
+                    transaction_account_name = transaction_split.account.fullname
+                    if transaction_account_name != account.fullname:
                         category = get_category_for_account(transaction_account_name)
                         current_balance = data.setdefault(category,
                                                           Decimal('0.0'))
-                        current_balance += get_decimal(transaction_split.GetAmount())
+                        current_balance += transaction_split.value
                         data[category] = current_balance
 
         result = self._generate_result()

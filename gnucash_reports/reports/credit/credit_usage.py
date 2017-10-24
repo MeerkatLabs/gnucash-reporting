@@ -1,13 +1,12 @@
 """
 Report that will show the amount of credit available, vs. currently used.
 """
-from gnucash_reports.wrapper import get_account, get_decimal, account_walker, get_balance_on_date
+from gnucash_reports.wrapper import get_account, account_walker, get_balance_on_date
 from gnucash_reports.periods import PeriodStart
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.reports.base import Report
 from decimal import Decimal
 from datetime import date
-import time
 
 
 class CreditUsage(Report):
@@ -20,7 +19,6 @@ class CreditUsage(Report):
     def __call__(self):
 
         today = date.today()
-        today_time = time.mktime(today.timetuple())
 
         credit_amount = Decimal(0.0)
         credit_used = Decimal(0.0)
@@ -30,8 +28,7 @@ class CreditUsage(Report):
             limit = credit_definition.get('limit', '0.0')
 
             credit_amount += Decimal(limit)
-
-            balance = get_decimal(account.GetBalanceAsOfDate(today_time))
+            balance = get_balance_on_date(account, today)
             credit_used += balance
 
         payload = self._generate_result()
