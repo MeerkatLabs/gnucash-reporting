@@ -210,22 +210,3 @@ class NetWorthTable(Report):
                 definition_data['deltas'][index] = 'N/A'
 
         return total_data
-
-
-if __name__ == '__main__':
-
-    from gnucash_reports.wrapper import initialize
-    import simplejson as json
-
-    session = initialize('data/Accounts.gnucash')
-
-    try:
-        report = NetWorthTable('Net Worth',
-                               [dict(name='Assets', accounts=['Assets'])],
-                               [dict(name='Liabilities', accounts=['Liabilities'])])
-        payload = report()
-        print json.dumps(payload)
-    except Exception as e:
-        print 'e', e
-    finally:
-        session.end()

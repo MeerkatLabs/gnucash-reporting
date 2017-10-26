@@ -52,6 +52,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', dest='configuration', default='core.yaml',
                         help='core configuration details of the application')
+    parser.add_argument('-r', '--report', dest='report', default=None,
+                        help='only execute the requested report')
 
     args = parser.parse_args()
 
@@ -68,7 +70,11 @@ def main():
 
     all_reports = []
 
-    reports_list = glob.glob(os.path.join(report_location, '*.yaml'))
+    if not args.report:
+        reports_list = glob.glob(os.path.join(report_location, '*.yaml'))
+    else:
+        reports_list = [args.report]
+
     for infile in sorted(reports_list):
 
         print 'Processing: %s' % infile

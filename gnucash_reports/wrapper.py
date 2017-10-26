@@ -31,7 +31,7 @@ gnucash_session = None
 
 def initialize(file_uri):
     global gnucash_session
-    gnucash_session = piecash.open_book(uri_conn=file_uri)
+    gnucash_session = piecash.open_book(uri_conn=file_uri, open_if_lock=True)
     return gnucash_session
 
 
@@ -84,23 +84,23 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
     return result
 
 
-def account_walker(account_list, ignore_list=None, place_holders=False, recursive=True):
+def account_walker(accounts, ignores=None, place_holders=False, recursive=True, **kwargs):
     """
     Generator method that will recursively walk the list of accounts provided, ignoring the accounts that are in the
     ignore list.
-    :param account_list:
-    :param ignore_list:
+    :param accounts:
+    :param ignores:
     :param place_holders:
     :return:
     """
-    if not ignore_list:
-        ignore_list = []
+    if not ignores:
+        ignores = []
 
-    _account_list = [a for a in account_list]
+    _account_list = [a for a in accounts]
 
     while _account_list:
         account_name = _account_list.pop()
-        if account_name in ignore_list:
+        if account_name in ignores:
             continue
 
         account = get_account(account_name)
@@ -111,7 +111,29 @@ def account_walker(account_list, ignore_list=None, place_holders=False, recursiv
             _account_list += [a.fullname for a in account.children]
 
 
-def get_balance_on_date(account, date_value, currency=None):
+def parse_walker_parameters(definition):
+    """
+    convert the incoming definition into a kwargs that can be used for the account walker.
+    :param definition:
+    :return:
+    """
+    return_value = {
+        'ignores': None,
+        'place_holders': False,
+        'recursive': True
+    }
+
+    if hasattr(definition, 'keys'):
+        return_value.update(definition)
+    elif hasattr(definition, 'sort'):
+        return_value.update(accounts=definition)
+    else:
+        return_value.update(accounts=[definition])
+
+    return return_value
+
+
+def get_balance_on_date(account, date_value=datetime.today(), currency=None):
 
     date_value = datetime.combine(date_value, datetime.max.time()).replace(microsecond=0, tzinfo=None)
 

@@ -42,6 +42,8 @@ def get_category_for_account(account_name):
     :param account_name:
     :return:
     """
+    # Translate the account name to use the common formatting.
+    account_name = account_name.replace(':', '.')
     value = _reverse.get(account_name, _default_category)
 
     if value == _default_category:

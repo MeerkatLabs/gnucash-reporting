@@ -64,30 +64,52 @@ class Report(object):
         return results
 
 
+def generate_results_package(name, report_type, description=None, data=None, **kwargs):
+    if not data:
+        data = dict()
+
+    data.update(**kwargs)
+
+    results = dict(name=name, type=report_type, data=data)
+    if description:
+        results['description'] = description
+
+    return {
+        'name': name,
+        'type': report_type,
+        'description': description,
+        'data': data
+    }
+
+
 class MultiReport(Report):
     """
     Report that will execute multiple report definitions.
     """
     report_type = 'multi_report'
 
-    def __init__(self, name, reports):
+    def __init__(self, name, **kwargs):
         super(MultiReport, self).__init__(name)
-        self._reports = []
-
-        for report in reports:
-            _report = build_report(report)
-            if _report:
-                self._reports.append(_report)
+        self.kwargs = kwargs
 
     def __call__(self):
+        return generate_multi_report(self.name, None, self.kwargs)
 
-        result = self._generate_result()
-        result['data']['reports'] = []
 
-        for report in self._reports:
-            result['data']['reports'].append(report())
+def generate_multi_report(name, description, definition):
+    report_definitions = definition.get('reports', [])
+    reports = []
 
-        return result
+    for report in report_definitions:
+        _report = build_report(report)
+        if _report:
+            reports.append(_report)
+
+    report_results = []
+    for report in reports:
+        report_results.append(report())
+
+    return generate_results_package(name, 'multi_report', description, reports=report_results)
 
 
 register_plugin(MultiReport)

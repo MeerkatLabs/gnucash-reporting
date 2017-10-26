@@ -1,7 +1,7 @@
 from dateutil.rrule import MONTHLY
 
-import bucket_generation as generator
-import key_generator as keys
+import gnucash_reports.collate.bucket_generation as generator
+import gnucash_reports.collate.key_generator as keys
 
 
 class BucketCollate(object):
