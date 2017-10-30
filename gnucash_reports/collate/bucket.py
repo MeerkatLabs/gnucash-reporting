@@ -11,6 +11,12 @@ class BucketCollate(object):
     """
 
     def __init__(self, bucket_generation, hash_method, store_function):
+        """
+        Create a bucket sort function.  
+        :param bucket_generation:
+        :param hash_method:
+        :param store_function:
+        """
         self._bucket_generation = bucket_generation
         self._hash_method = hash_method
         self._store_function = store_function

@@ -12,23 +12,11 @@ from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.configuration.investment_allocations import get_asset_allocation
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnucash_reports.reports.base import Report, generate_results_package
 from gnucash_reports.wrapper import get_account, get_balance_on_date, AccountTypes, \
     account_walker, get_splits, get_corr_account_full_name, get_prices, parse_walker_parameters
 
 
-class InvestmentBalance(Report):
-    report_type = 'investment_balance'
-
-    def __init__(self, name, **kwargs):
-        super(InvestmentBalance, self).__init__(name)
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return investment_balance(self.name, None, self.kwargs)
-
-
-def investment_balance(name, description, definition):
+def investment_balance(definition):
     account = get_account(definition['account'])
 
     last_dividend = Decimal('0.0')
@@ -82,13 +70,9 @@ def investment_balance(name, description, definition):
         values[date] = max(values.get(date, Decimal('0.0')),
                            get_balance_on_date(account, price.date, currency))
 
-    return generate_results_package(name, 'investment_balance', description,
-                                    purchases=sorted([(key, value) for key, value in purchases.iteritems()],
-                                                     key=itemgetter(0)),
-                                    dividend=sorted([(key, value) for key, value in dividends.iteritems()],
-                                                    key=itemgetter(0)),
-                                    value=sorted([(key, value) for key, value in values.iteritems()],
-                                                 key=itemgetter(0)))
+    return dict(purchases=sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0)),
+                dividend=sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0)),
+                value=sorted([(key, value) for key, value in values.iteritems()], key=itemgetter(0)))
 
 
 def investment_bucket_generator():
@@ -124,18 +108,7 @@ def store_investment(bucket, value):
     return bucket
 
 
-class InvestmentTrend(Report):
-    report_type = 'investment_trend'
-
-    def __init__(self, name, **kwargs):
-        super(InvestmentTrend, self).__init__(name)
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return investment_trend(self.name, None, self.kwargs)
-
-
-def investment_trend(name, description, definition):
+def investment_trend(definition):
     investment_accounts = parse_walker_parameters(definition.get('investment_accounts', []))
     period_start = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
     period_end = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
@@ -187,21 +160,10 @@ def investment_trend(name, description, definition):
                       results['expense'][index][1])
         monthly_start = record[1]
 
-    return generate_results_package(name, 'investment_trend', description, data=results)
+    return results
 
 
-class InvestmentAllocation(Report):
-    report_type = 'investment_allocation'
-
-    def __init__(self, name, **kwargs):
-        super(InvestmentAllocation, self).__init__(name)
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return investment_allocation(self.name, None, self.kwargs)
-
-
-def investment_allocation(name, description, definition):
+def investment_allocation(definition):
     investment_accounts = parse_walker_parameters(definition.get('investment_accounts', []))
     category_mapping = definition.get('category_mapping', {})
 
@@ -218,7 +180,5 @@ def investment_allocation(name, description, definition):
         for key, value in results.iteritems():
             breakdown[key] = breakdown.get(key, Decimal('0.0')) + value
 
-    return generate_results_package(name, 'investment_allocation', description,
-                                    categories=sorted([[category_mapping.get(key, key), value]
-                                                       for key, value in breakdown.iteritems()],
-                                                      key=itemgetter(0)))
+    return dict(categories=sorted([[category_mapping.get(key, key), value] for key, value in breakdown.iteritems()],
+                                  key=itemgetter(0)))

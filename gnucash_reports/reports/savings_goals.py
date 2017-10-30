@@ -2,112 +2,66 @@ import time
 from datetime import datetime
 from decimal import Decimal
 
-import simplejson as json
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.periods import PeriodStart
-from gnucash_reports.reports.base import Report
 from gnucash_reports.wrapper import get_account, get_balance_on_date, account_walker
 
 
-class SavingsGoal(Report):
-    report_type = 'savings_goal'
+def savings_goal(definition):
+    accounts = definition['account']
+    if isinstance(accounts, basestring):
+        accounts = [accounts]
 
-    def __init__(self, name, account, goal, as_of=PeriodStart.today, contributions=None):
-        super(SavingsGoal, self).__init__(name)
+    goal_amount = Decimal(definition.get('goal', Decimal(0.0)))
 
-        if isinstance(account, basestring):
-            account = [account]
+    as_of = PeriodStart(definition.get('as_of', PeriodStart.today))
+    contributions = definition.get('contributions', [])
 
-        self.accounts = account
-        self.goal_amount = Decimal(goal)
+    if not hasattr(contributions, 'sort'):
+        contributions = [contributions]
 
-        self.as_of = PeriodStart(as_of)
+    total_balance = Decimal('0.0')
+    currency = get_currency()
 
-        if not contributions:
-            contributions = []
-        elif type(contributions) != list:
-            contributions = [contributions]
+    for account_description in accounts:
+        multiplier = Decimal('1.0')
+        if isinstance(account_description, basestring):
+            account = account_description
+        else:
+            account = account_description[0]
+            multiplier = Decimal(account_description[1])
 
-        self.contributions = contributions
+        for account_name in account_walker([account]):
+            balance = get_balance_on_date(account_name, as_of.date, currency)
+            total_balance += (balance * multiplier)
 
-    def __call__(self):
+    for contribution in contributions:
+        total_balance += Decimal(contribution)
 
-        total_balance = Decimal('0.0')
-        currency = get_currency()
-
-        for account_description in self.accounts:
-            multiplier = Decimal('1.0')
-            if isinstance(account_description, basestring):
-                account = account_description
-            else:
-                account = account_description[0]
-                multiplier = Decimal(account_description[1])
-
-            for account_name in account_walker([account]):
-                balance = get_balance_on_date(account_name, self.as_of.date, currency)
-                total_balance += (balance * multiplier)
-
-        for contribution in self.contributions:
-            total_balance += Decimal(contribution)
-
-        payload = self._generate_result()
-        payload['data']['balance'] = total_balance
-        payload['data']['goal'] = self.goal_amount
-
-        return payload
+    return dict(balance=total_balance, goal=goal_amount)
 
 
-class SavingsGoalTrend(Report):
-    report_type = 'savings_goal_trend'
+def savings_goal_trend(definition):
+    account_name = definition.get('account_name')
+    past_trend = definition.get('past_trend', 12)
+    future_trend = definition.get('future_trend', 6)
 
-    def __init__(self, name, account_name, goal_amount, past_trend=12, future_trend=6):
-        super(SavingsGoalTrend, self).__init__(name)
-        self.account_name = account_name
-        self.goal_amount = goal_amount
-        self.past_trend = past_trend
-        self.future_trend = future_trend
+    account = get_account(account_name)
 
-    def __call__(self):
+    todays_date = datetime.today()
+    beginning_of_month = datetime(todays_date.year, todays_date.month, 1)
 
-        account = get_account(self.account_name)
+    start_of_trend = beginning_of_month - relativedelta(months=past_trend)
+    end_of_trend = start_of_trend + relativedelta(months=past_trend + future_trend)
 
-        todays_date = datetime.today()
-        beginning_of_month = datetime(todays_date.year, todays_date.month, 1)
+    trend = []
+    for dt in rrule(MONTHLY, dtstart=start_of_trend, until=end_of_trend):
+        time_value = time.mktime(dt.timetuple())
 
-        start_of_trend = beginning_of_month - relativedelta(months=self.past_trend)
-        end_of_trend = start_of_trend + relativedelta(months=self.past_trend + self.future_trend)
+        balance = get_balance_on_date(account, time_value)
+        trend.append(dict(date=dt.strftime('%Y-%m-%d'), balance=balance))
 
-        payload = self._generate_result()
-        payload['data']['trend'] = []
-
-        for dt in rrule(MONTHLY, dtstart=start_of_trend, until=end_of_trend):
-            time_value = time.mktime(dt.timetuple())
-
-            balance = get_balance_on_date(account, time_value)
-            payload['data']['trend'].append(dict(date=dt.strftime('%Y-%m-%d'),
-                                                 balance=balance))
-
-        return payload
-
-
-if __name__ == '__main__':
-
-    from gnucash_reports.wrapper import initialize
-
-    session = initialize('data/Accounts.gnucash')
-    goal_amount = Decimal('25904.12')
-
-    report = SavingsGoalTrend('Estimated Taxes', 'Assets.Savings Goals.Estimated Taxes 2015', goal_amount)
-    payload = report()
-
-    other_report = SavingsGoal('Estimated Taxes', 'Assets.Savings Goals.Estimated Taxes 2015', goal_amount)
-    other_payload = other_report()
-
-    session.end()
-
-    print json.dumps(payload)
-    print ''
-    print json.dumps(other_payload)
+    return dict(trend=trend)

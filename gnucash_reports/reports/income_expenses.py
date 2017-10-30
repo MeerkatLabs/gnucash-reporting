@@ -7,22 +7,10 @@ from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.collate.bucket_generation import debit_credit_generator
 from gnucash_reports.collate.store import store_credit_debit
 from gnucash_reports.periods import PeriodEnd, PeriodStart, PeriodSize
-from gnucash_reports.reports.base import Report, generate_results_package
 from gnucash_reports.wrapper import account_walker, get_splits, parse_walker_parameters
 
 
-class IncomeVsExpense(Report):
-    report_type = 'income_vs_expense'
-
-    def __init__(self, name, **kwargs):
-        super(IncomeVsExpense, self).__init__(name)
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return income_vs_expenses(self.name, None, self.kwargs)
-
-
-def income_vs_expenses(name, description, definition):
+def income_vs_expense(definition):
     income_accounts = parse_walker_parameters(definition.get('income_accounts', []))
     expense_accounts = parse_walker_parameters(definition.get('expense_accounts', []))
 
@@ -55,7 +43,6 @@ def income_vs_expenses(name, description, definition):
         debit_values.append(dict(date=time_value, value=-value['debit']))
         difference_value.append(dict(date=time_value, value=-(value['debit'] + value['credit'])))
 
-    return generate_results_package(name, 'income_vs_expense', description,
-                                    expenses=sorted(credit_values, key=lambda s: s['date']),
-                                    income=sorted(debit_values, key=lambda s: s['date']),
-                                    net=sorted(difference_value, key=lambda s: s['date']),)
+    return dict(expenses=sorted(credit_values, key=lambda s: s['date']),
+                income=sorted(debit_values, key=lambda s: s['date']),
+                net=sorted(difference_value, key=lambda s: s['date']),)

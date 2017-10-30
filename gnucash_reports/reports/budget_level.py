@@ -7,22 +7,10 @@ from decimal import Decimal
 
 from gnucash_reports.configuration.expense_categories import get_accounts_for_category
 from gnucash_reports.periods import PeriodStart, PeriodEnd
-from gnucash_reports.reports.base import Report, generate_results_package
 from gnucash_reports.wrapper import get_splits, account_walker, parse_walker_parameters
 
 
-class BudgetLevel(Report):
-    report_type = 'budget_level'
-
-    def __init__(self, name, **kwargs):
-        super(BudgetLevel, self).__init__(name)
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return budget_level(self.name, None, self.kwargs)
-
-
-def budget_level(name, description, definition):
+def budget_level(definition):
     accounts = parse_walker_parameters(definition.get('accounts', []))
     budget_value = definition.get('budget_value', Decimal(0.0))
     year_to_date = definition.get('year_to_date', True)
@@ -59,31 +47,16 @@ def budget_level(name, description, definition):
             'currentYearDay': today.timetuple().tm_yday
         })
 
-    return generate_results_package(name, 'budget_level', description, **data_payload)
+    return data_payload
 
 
-class CategoryBudgetLevel(BudgetLevel):
-    report_type = 'category_budget_level'
-
-    def __init__(self, name, category, budget_value):
-        super(CategoryBudgetLevel, self).__init__(name, **{
-            'account': get_accounts_for_category(category),
-            'budget_value': budget_value
-        })
+def category_budget_level(definition):
+    category = definition.pop('category')
+    definition['account'] = get_accounts_for_category(category)
+    return budget_level(definition)
 
 
-class BudgetPlanning(Report):
-    report_type = 'budget_planning'
-
-    def __init__(self, name, **kwargs):
-        super(BudgetPlanning, self).__init__(name)
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return budget_planning(self.name, None, self.kwargs)
-
-
-def budget_planning(name, description, definition):
+def budget_planning(definition):
     income = Decimal(definition.get('income', Decimal(0.0)))
     expense_definitions = definition.get('expense_definitions', [])
     remaining_income = income
@@ -95,6 +68,4 @@ def budget_planning(name, description, definition):
         categories.append(dict(name=definition['name'], value=value))
         remaining_income -= value
 
-    return generate_results_package(name, 'budget_planning', description,
-                                    income=income, categories=categories,
-                                    remaining=remaining_income)
+    return dict(income=income, categories=categories, remaining=remaining_income)

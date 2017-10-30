@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath(os.getcwd()))
 
 from gnucash_reports.wrapper import initialize
-from gnucash_reports.reports import build_report
+from gnucash_reports.reports import run_report
 from gnucash_reports.configuration import configure_application
 from datetime import datetime
 
@@ -86,12 +86,10 @@ def main():
 
             for report_definition in report_configuration['definitions']:
 
-                _report = build_report(report_definition)
+                result = run_report(report_definition)
 
-                if _report:
-                    print '  Running: %s' % _report.name
-                    payload = _report()
-                    result_definition['reports'].append(payload)
+                if result:
+                    result_definition['reports'].append(result)
 
             output_file_name = os.path.split(infile)[-1] + '.json'
 
