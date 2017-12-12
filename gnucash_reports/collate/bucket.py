@@ -1,6 +1,7 @@
-import bucket_generation as generator
-import key_generator as keys
 from dateutil.rrule import MONTHLY
+
+import gnucash_reports.collate.bucket_generation as generator
+import gnucash_reports.collate.key_generator as keys
 
 
 class BucketCollate(object):
@@ -10,6 +11,12 @@ class BucketCollate(object):
     """
 
     def __init__(self, bucket_generation, hash_method, store_function):
+        """
+        Create a bucket sort function.  
+        :param bucket_generation:
+        :param hash_method:
+        :param store_function:
+        """
         self._bucket_generation = bucket_generation
         self._hash_method = hash_method
         self._store_function = store_function

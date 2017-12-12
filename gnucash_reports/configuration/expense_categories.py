@@ -25,7 +25,8 @@ def configure(json_dictionary):
         if recursive:
             all_accounts = []
             for account in account_walker(accounts, place_holders=True):
-                all_accounts.append(account.get_full_name())
+                # print 'loading account: %s' % account.fullname
+                all_accounts.append(account.fullname.replace(':', '.'))
         else:
             all_accounts = accounts
 
@@ -41,6 +42,8 @@ def get_category_for_account(account_name):
     :param account_name:
     :return:
     """
+    # Translate the account name to use the common formatting.
+    account_name = account_name.replace(':', '.')
     value = _reverse.get(account_name, _default_category)
 
     if value == _default_category:

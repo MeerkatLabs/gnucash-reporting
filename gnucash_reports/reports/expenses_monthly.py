@@ -10,178 +10,93 @@ from gnucash_reports.collate.bucket import PeriodCollate, CategoryCollate, Accou
 from gnucash_reports.collate.bucket_generation import decimal_generator, integer_generator
 from gnucash_reports.collate.store import split_summation, count
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
-from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_splits, account_walker
+from gnucash_reports.wrapper import get_splits, account_walker, parse_walker_parameters
 
 
-class ExpensesMonthly(Report):
-    report_type = 'expenses_period'
+def expenses_period(definition):
+    expense_accounts = parse_walker_parameters(definition.get('expenses_base', []))
+    start_period = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
+    end_period = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
+    period_size = PeriodSize(definition.get('period_size', PeriodSize.month))
+    show_record_count = definition.get('show_record_count', False)
 
-    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago.value,
-                 period_end=PeriodEnd.this_month.value, period_size=PeriodSize.month.value, show_record_count=False):
-        super(ExpensesMonthly, self).__init__(name)
-        self.expenses_base = expenses_base
+    bucket = PeriodCollate(start_period.date, end_period.date, decimal_generator, split_summation,
+                           frequency=period_size.frequency, interval=period_size.interval)
+    record_count = PeriodCollate(start_period.date, end_period.date, integer_generator, count,
+                                 frequency=period_size.frequency, interval=period_size.interval)
 
-        if ignore_list:
-            self.ignore_list = ignore_list
-        else:
-            self.ignore_list = []
+    for account in account_walker(**expense_accounts):
+        for split in get_splits(account, start_period.date, end_period.date):
+            bucket.store_value(split)
+            record_count.store_value(split)
 
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
-        self._size = PeriodSize(period_size)
-        self._show_record_count = show_record_count
+    sorted_results = []
+    sorted_count_results = []
 
-    def __call__(self):
+    for key, value in bucket.container.iteritems():
+        sorted_results.append(dict(date=time.mktime(key.timetuple()), value=value))
 
-        bucket = PeriodCollate(self._start.date, self._end.date, decimal_generator, split_summation,
-                               frequency=self._size.frequency, interval=self._size.interval)
-        record_count = PeriodCollate(self._start.date, self._end.date, integer_generator, count,
-                                     frequency=self._size.frequency, interval=self._size.interval)
+    for key, value in record_count.container.iteritems():
+        sorted_count_results.append(dict(date=time.mktime(key.timetuple()), value=value))
 
-        for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, self._start.date, self._end.date):
-                bucket.store_value(split)
-                record_count.store_value(split)
+    data_set = {
+        'expenses': sorted(sorted_results, key=lambda s: s['date'])
+    }
 
-        return_value = self._generate_result()
-        sorted_results = []
-        sorted_count_results = []
+    if show_record_count:
+        data_set['count'] = sorted(sorted_count_results, key=lambda s: s['date'])
 
-        for key, value in bucket.container.iteritems():
-            sorted_results.append(dict(date=time.mktime(key.timetuple()), value=value))
-
-        for key, value in record_count.container.iteritems():
-            sorted_count_results.append(dict(date=time.mktime(key.timetuple()), value=value))
-
-        return_value['data']['expenses'] = sorted(sorted_results, key=lambda s: s['date'])
-
-        if self._show_record_count:
-            return_value['data']['count'] = sorted(sorted_count_results, key=lambda s: s['date'])
-
-        return return_value
+    return data_set
 
 
-class ExpensesMonthlyBox(Report):
-    report_type = 'expenses_box'
+def expenses_box(definition):
+    expense_accounts = parse_walker_parameters(definition.get('expenses_base', []))
+    start_period = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
+    end_period = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
+    period_size = PeriodSize(definition.get('period_size', PeriodSize.month))
 
-    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_month_year_ago,
-                 period_end=PeriodEnd.this_month, period_size=PeriodSize.month):
-        super(ExpensesMonthlyBox, self).__init__(name)
-        self.expenses_base = expenses_base
+    bucket = PeriodCollate(start_period.date, end_period.date, decimal_generator, split_summation,
+                           frequency=period_size.frequency, interval=period_size.interval)
 
-        if ignore_list:
-            self.ignore_list = ignore_list
-        else:
-            self.ignore_list = []
+    for account in account_walker(**expense_accounts):
+        for split in get_splits(account, start_period.date, end_period.date):
+            bucket.store_value(split)
 
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
-        self._size = PeriodSize(period_size)
+    results = []
 
-    def __call__(self):
+    for key, value in bucket.container.iteritems():
+        results.append(float(value))
 
-        bucket = PeriodCollate(self._start.date, self._end.date, decimal_generator, split_summation,
-                               frequency=self._size.frequency, interval=self._size.interval)
-
-        for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, self._start.date, self._end.date):
-                bucket.store_value(split)
-
-        return_value = self._generate_result()
-        results = []
-
-        for key, value in bucket.container.iteritems():
-            results.append(float(value))
-
-        return_value['data']['low'] = np.percentile(results, 0)
-        return_value['data']['high'] = np.percentile(results, 100)
-        return_value['data']['q1'] = np.percentile(results, 25)
-        return_value['data']['q2'] = np.percentile(results, 50)
-        return_value['data']['q3'] = np.percentile(results, 75)
-
-        return return_value
+    return dict(low=np.percentile(results, 0),
+                high=np.percentile(results, 100),
+                q1=np.percentile(results, 25),
+                q2=np.percentile(results, 50),
+                q3=np.percentile(results, 75),)
 
 
-class ExpenseCategories(Report):
-    report_type = 'expenses_categories'
+def expenses_categories(definition):
+    expense_accounts = parse_walker_parameters(definition.get('expenses_base', []))
+    start_period = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
+    end_period = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
 
-    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_year.value,
-                 period_end=PeriodEnd.this_year.value):
-        super(ExpenseCategories, self).__init__(name)
-        self.expenses_base = expenses_base
+    bucket = CategoryCollate(decimal_generator, split_summation)
 
-        if ignore_list:
-            self.ignore_list = ignore_list
-        else:
-            self.ignore_list = []
+    for account in account_walker(**expense_accounts):
+        for split in get_splits(account, start_period.date, end_period.date):
+            bucket.store_value(split)
 
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
-
-    def __call__(self):
-        bucket = CategoryCollate(decimal_generator, split_summation)
-
-        for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, self._start.date, self._end.date):
-                bucket.store_value(split)
-
-        return_value = self._generate_result()
-
-        return_value['data']['categories'] = sorted([[key, value] for key, value in bucket.container.iteritems()],
-                                                    key=itemgetter(0))
-
-        return return_value
+    return dict(categories=sorted([[key, value] for key, value in bucket.container.iteritems()], key=itemgetter(0)))
 
 
-class ExpenseAccounts(Report):
-    report_type = 'expense_accounts'
+def expense_accounts(definition):
+    accounts = parse_walker_parameters(definition.get('expenses_base', []))
+    start_period = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
+    end_period = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
 
-    def __init__(self, name, expenses_base, ignore_list=None, period_start=PeriodStart.this_year.value,
-                 period_end=PeriodEnd.this_year.value):
-        super(ExpenseAccounts, self).__init__(name)
-        self.expenses_base = expenses_base
+    bucket = AccountCollate(decimal_generator, split_summation)
 
-        if ignore_list:
-            self.ignore_list = ignore_list
-        else:
-            self.ignore_list = []
+    for account in account_walker(**accounts):
+        for split in get_splits(account, start_period.date, end_period.date):
+            bucket.store_value(split)
 
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
-
-    def __call__(self):
-        bucket = AccountCollate(decimal_generator, split_summation)
-
-        for account in account_walker(self.expenses_base, self.ignore_list):
-            for split in get_splits(account, self._start.date, self._end.date):
-                bucket.store_value(split)
-
-        return_value = self._generate_result()
-
-        return_value['data']['categories'] = sorted([[key, value] for key, value in bucket.container.iteritems()],
-                                                    key=itemgetter(0))
-
-        return return_value
-
-if __name__ == '__main__':
-
-    import simplejson as json
-    from gnucash_reports.wrapper import initialize
-
-    session = initialize('data/Accounts.gnucash')
-
-    try:
-        report = ExpensesMonthlyBox('expenses', ['Expenses'], ['Expenses.Taxes',
-                                                               'Expenses.Seaside View',
-                                                               'Expenses.ISSACCorp',
-                                                               'Expenses.DQI'])
-
-        result = report()
-
-        print json.dumps(result)
-    finally:
-        session.end()
-
-
-
+    return dict(categories=sorted([[key, value] for key, value in bucket.container.iteritems()], key=itemgetter(0)))

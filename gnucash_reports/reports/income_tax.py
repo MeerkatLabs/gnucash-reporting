@@ -4,48 +4,31 @@ Attempt to determine federal tax information.
 from decimal import Decimal
 
 from gnucash_reports.configuration.tax_tables import calculate_tax
-from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_account, get_decimal, get_splits
 from gnucash_reports.periods import PeriodStart, PeriodEnd
+from gnucash_reports.wrapper import get_splits, account_walker, parse_walker_parameters
 
 
-class IncomeTax(Report):
-    report_type = 'income_tax'
+def income_tax(definition):
+    income_accounts = parse_walker_parameters(definition.get('income_accounts', []))
+    tax_accounts = parse_walker_parameters(definition.get('tax_accounts', []))
+    period_start = PeriodStart(definition.get('period_start', PeriodStart.this_year))
+    period_end = PeriodEnd(definition.get('period_end', PeriodEnd.this_year))
+    tax_name = definition.get('tax_name', 'federal')
+    tax_status = definition.get('tax_status', 'single')
 
-    def __init__(self, name, income_accounts, tax_accounts, period_start=PeriodStart.this_year,
-                 period_end=PeriodEnd.this_year, tax_name='federal', tax_status='single'):
-        super(IncomeTax, self).__init__(name)
-        self.income_accounts = income_accounts
-        self.tax_accounts = tax_accounts
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
+    total_income = Decimal(0.0)
+    total_taxes = Decimal(0.0)
 
-        self._tax_name = tax_name
-        self._tax_status = tax_status
+    for account in account_walker(**income_accounts):
+        for split in get_splits(account, period_start.date, period_end.date):
+            value = split.value * -1  # negate the value because income is leaving these accounts
+            total_income += value
 
-    def __call__(self):
+    for account in account_walker(**tax_accounts):
+        for split in get_splits(account,  period_start.date, period_end.date):
+            value = split.value
+            total_taxes += value
 
-        total_income = Decimal(0.0)
-        total_taxes = Decimal(0.0)
+    tax_value = calculate_tax(tax_name, tax_status, total_income)
 
-        for account_name in self.income_accounts:
-            account = get_account(account_name)
-
-            for split in get_splits(account, self._start.date, self._end.date):
-                value = get_decimal(split.GetAmount()) * -1
-                total_income += value
-
-        for account_name in self.tax_accounts:
-            account = get_account(account_name)
-            for split in get_splits(account,  self._start.date, self._end.date):
-                value = get_decimal(split.GetAmount())
-                total_taxes += value
-
-        tax_value = calculate_tax(self._tax_name, self._tax_status, total_income)
-
-        result = self._generate_result()
-        result['data']['income'] = total_income
-        result['data']['tax_value'] = tax_value
-        result['data']['taxes_paid'] = total_taxes
-
-        return result
+    return dict(income=total_income, tax_value=tax_value, taxes_paid=total_taxes)

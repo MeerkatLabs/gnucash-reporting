@@ -1,7 +1,8 @@
-from enum import Enum
 from datetime import date, datetime
+
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY, YEARLY, DAILY, WEEKLY
+from enum import Enum
 
 
 class PeriodStart(Enum):

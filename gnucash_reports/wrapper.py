@@ -1,35 +1,37 @@
-from gnucash import Session
+from datetime import datetime
 from decimal import Decimal
-import time
-from datetime import date
+
 import enum
+import piecash
+import re
 
 
 @enum.unique
-class AccountTypes(enum.IntEnum):
-    none = -1
-    bank = 0
-    cash = 1
-    credit = 3
-    asset = 2
-    liability = 4
-    stock = 5
-    mutual_fund = 6
-    currency = 7
-    income = 8
-    expense = 9
-    equity = 10
-    accounts_receivable = 11
-    accounts_payable = 12
-    root = 13
-    trading = 14
+class AccountTypes(enum.Enum):
+    none = 'NONE'
+    bank = 'BANK'
+    cash = 'CASH'
+    credit = 'CREDIT'
+    asset = 'ASSET'
+    liability = 'LIABILITY'
+    stock = 'STOCK'
+    mutual_fund = 'MUTUAL'
+    currency = 'CURRENCY'
+    income = 'INCOME'
+    expense = 'EXPENSE'
+    equity = 'EQUITY'
+    accounts_receivable = 'ACCOUNTS_RECEIVABLE'
+    accounts_payable = 'ACCOUNTS_PAYABLE'
+    root = 'ROOT'
+    trading = 'TRADING'
+
 
 gnucash_session = None
 
 
 def initialize(file_uri):
     global gnucash_session
-    gnucash_session = Session(file_uri, is_new=False)
+    gnucash_session = piecash.open_book(uri_conn=file_uri, open_if_lock=True)
     return gnucash_session
 
 
@@ -38,96 +40,130 @@ def get_session():
 
 
 def get_account(account_name):
+    current_account = gnucash_session.root_account
 
-    account = gnucash_session.get_book().get_root_account().lookup_by_full_name(account_name)
+    for child_name in re.split('[:.]', account_name):
+        account = gnucash_session.session.query(piecash.Account).filter(piecash.Account.parent == current_account,
+                                                                        piecash.Account.name == child_name).one_or_none()
 
-    if account is None:
-        raise RuntimeError('Account %s is not found' % account_name)
+        if account is None:
+            raise RuntimeError('Account %s is not found in %s' % (account_name, current_account))
 
-    return account
+        current_account = account
 
-
-def get_decimal(numeric):
-    try:
-        return Decimal(numeric.num()) / Decimal(numeric.denom())
-    except TypeError:
-        return Decimal(numeric.num) / Decimal(numeric.denom)
+    return current_account
 
 
 def get_splits(account, start_date, end_date=None, credit=True, debit=True):
 
-    start_time = time.mktime(start_date.timetuple())
+    start_time = datetime.combine(start_date, datetime.min.time())
     if not end_date:
-        end_date = date.today()
+        end_date = datetime.today()
 
-    end_time = time.mktime(end_date.timetuple())
+    end_time = datetime.combine(end_date, datetime.max.time())
+
+    start_time = start_time.replace(microsecond=0, tzinfo=None)
+    end_time = end_time.replace(microsecond=0, tzinfo=None)
 
     result = []
 
-    for split in account.GetSplitList():
-        split_date = split.parent.GetDate()
+    split_query = gnucash_session.session.query(piecash.Split).filter(
+        piecash.Split.account == account,
+        piecash.Split.transaction.has(piecash.Transaction.post_date >= start_time),
+        piecash.Split.transaction.has(piecash.Transaction.post_date <= end_time)
+    )
 
-        if start_time <= split_date <= end_time:
+    for split in split_query:
+        is_credit = split.value > 0
 
-            is_credit = split.GetAmount().num() > 0
-
-            if credit and is_credit:
-                result.append(split)
-            elif debit and not is_credit:
-                result.append(split)
+        if credit and is_credit:
+            result.append(split)
+        elif debit and not is_credit:
+            result.append(split)
 
     return result
 
 
-def account_walker(account_list, ignore_list=None, place_holders=False, recursive=True):
+def account_walker(accounts, ignores=None, place_holders=False, recursive=True, **kwargs):
     """
     Generator method that will recursively walk the list of accounts provided, ignoring the accounts that are in the
     ignore list.
-    :param account_list:
-    :param ignore_list:
+    :param accounts:
+    :param ignores:
     :param place_holders:
     :return:
     """
-    if not ignore_list:
-        ignore_list = []
+    if not ignores:
+        ignores = []
 
-    _account_list = [a for a in account_list]
+    _account_list = [a for a in accounts]
 
     while _account_list:
         account_name = _account_list.pop()
-        if account_name in ignore_list:
+        if account_name in ignores:
             continue
 
         account = get_account(account_name)
-        if not account.GetPlaceholder() or place_holders:
+        if not account.placeholder or place_holders:
             yield account
 
         if recursive:
-            _account_list += [a.get_full_name() for a in account.get_children()]
+            _account_list += [a.fullname for a in account.children]
 
 
-def get_balance_on_date(account, date_value, currency=None):
-    today_time = time.mktime(date_value.timetuple())
+def parse_walker_parameters(definition):
+    """
+    convert the incoming definition into a kwargs that can be used for the account walker.
+    :param definition:
+    :return:
+    """
+    return_value = {
+        'ignores': None,
+        'place_holders': False,
+        'recursive': True
+    }
 
-    balance = account.GetBalanceAsOfDate(today_time)
-    balance_decimal = get_decimal(balance)
+    if hasattr(definition, 'keys'):
+        return_value.update(definition)
+    elif hasattr(definition, 'sort'):
+        return_value.update(accounts=definition)
+    else:
+        return_value.update(accounts=[definition])
 
-    if currency:
-        account_commodity = account.GetCommodity()
-        price_db = gnucash_session.get_book().get_price_db()
+    return return_value
 
-        # If the account_commodity and the currency are the same value, then just ignore fetching the value from the
-        # database.
-        if account_commodity.get_mnemonic() != currency.get_mnemonic():
-            # The API of this call is different than the get balance as of date, takes an actual date datetime object.
-            price = price_db.lookup_latest_before(account_commodity, currency, date_value)
 
-            # Just in case the price couldn't be found based on the date provided, use the nearest value, even if it's
-            # in the future.
-            if price is None:
-                price = price_db.lookup_nearest_in_time(account_commodity, currency, date_value)
+def get_balance_on_date(account, date_value=datetime.today(), currency=None):
 
-            balance_decimal *= get_decimal(price.get_value())
+    date_value = datetime.combine(date_value, datetime.max.time()).replace(microsecond=0, tzinfo=None)
+
+    splits = gnucash_session.session.query(piecash.Split).filter(
+        piecash.Split.account == account,
+        piecash.Split.transaction.has(piecash.Transaction.post_date < date_value)
+    ).all()
+
+    if splits:
+        balance_decimal = sum([s.quantity for s in splits])
+
+        if currency:
+            # If the account_commodity and the currency are the same value, then just ignore fetching the value from the
+            # database.
+            if currency.mnemonic != account.commodity.mnemonic:
+
+                price_value = gnucash_session.session.query(piecash.Price).filter(
+                    piecash.Price.commodity == account.commodity,
+                    piecash.Price.currency == currency,
+                    piecash.Price.date <= date_value,
+                ).order_by(piecash.Price.date.desc()).limit(1).one_or_none()
+
+                if price_value:
+                    # print date_value, account.fullname, balance_decimal, price_value.value
+                    balance_decimal = balance_decimal * price_value.value
+                else:
+                    print currency, account.commodity, date_value
+                    raise NotImplementedError('Couldn\'t find a valid value')
+    else:
+        balance_decimal = Decimal(0.0)
 
     return balance_decimal
 
@@ -141,18 +177,34 @@ def get_corr_account_full_name(split):
     """
     return_value = []
 
-    signed = get_decimal(split.GetValue()).is_signed()
+    signed = split.value.is_signed()
 
-    for child_split in split.parent.GetSplitList():
-        split_value = get_decimal(child_split.GetValue())
+    for child_split in split.transaction.splits:
+        split_value = child_split.value
 
         if signed != split_value.is_signed():
-            return_value.append(child_split.GetAccount())
+            return_value.append(child_split.account)
 
     if not return_value:
         raise RuntimeError('Couldn\'t find opposite accounts.')
 
     if len(return_value) > 1:
+        print 'return_value: ', return_value
         raise RuntimeError('Split returned more than one correlating account')
 
-    return return_value[0].get_full_name()
+    return return_value[0].fullname
+
+
+def get_prices(commodity, currency):
+    """
+    Return all of the prices for a specific commodity in the currency provided.
+    :param commodity:
+    :param currency:
+    :return:
+    """
+    price_list = gnucash_session.session.query(piecash.Price).filter(
+        piecash.Price.commodity == commodity,
+        piecash.Price.currency == currency
+        ).order_by(piecash.Price.date.desc()).all()
+
+    return price_list

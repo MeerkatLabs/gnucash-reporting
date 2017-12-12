@@ -59,8 +59,8 @@ def calculate_tax(table_name, table_type, value):
 
     return current_tax
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     assert(calculate_tax('single', Decimal('8225.0')) == Decimal('823.0'))
     assert(calculate_tax('single', Decimal('100000.0')) == Decimal('21071.0'))
     assert(calculate_tax('single', Decimal('500000.0')) == Decimal('154369.0'))

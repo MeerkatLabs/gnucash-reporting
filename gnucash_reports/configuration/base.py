@@ -24,4 +24,3 @@ def configure_application(json_dictionary):
     """
     for plugin in _plugins:
         plugin(json_dictionary.copy())
-

@@ -2,61 +2,29 @@
 Iterate through all of the accounts provided and give a categorized record of the expenses that have been charged to
 that account.
 """
-from gnucash_reports.configuration.expense_categories import get_category_for_account
-from gnucash_reports.wrapper import get_decimal, account_walker, get_splits
-from gnucash_reports.reports.base import Report
-from gnucash_reports.periods import PeriodStart, PeriodEnd
 from decimal import Decimal
 from operator import itemgetter
 
-
-class AccountUsageCategories(Report):
-    report_type = 'account_usage_categories'
-
-    def __init__(self, name, account_list, period_start=PeriodStart.this_month, period_end=PeriodEnd.this_month):
-        super(AccountUsageCategories, self).__init__(name)
-        self._accounts = account_list
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
-
-    def __call__(self):
-
-        start_of_trend = self._start.date
-        end_of_trend = self._end.date
-
-        data = dict()
-
-        for account in account_walker(self._accounts):
-            for split in get_splits(account, start_of_trend, end_of_trend, credit=False):
-
-                transaction = split.parent
-
-                for transaction_split in transaction.GetSplitList():
-                    transaction_account_name = transaction_split.GetAccount().get_full_name()
-                    if transaction_account_name != account.get_full_name():
-                        category = get_category_for_account(transaction_account_name)
-                        current_balance = data.setdefault(category,
-                                                          Decimal('0.0'))
-                        current_balance += get_decimal(transaction_split.GetAmount())
-                        data[category] = current_balance
-
-        result = self._generate_result()
-        result['data']['categories'] = sorted([[key, value] for key, value in data.iteritems()], key=itemgetter(0))
-
-        return result
+from gnucash_reports.collate.bucket import CategoryCollate
+from gnucash_reports.collate.store import split_summation
+from gnucash_reports.periods import PeriodStart, PeriodEnd
+from gnucash_reports.wrapper import account_walker, get_splits, parse_walker_parameters
 
 
-if __name__ == '__main__':
-    from gnucash_reports.wrapper import initialize
+def account_usage_categories(definition):
+    start_of_trend = PeriodStart(definition.get('period_start', PeriodStart.this_month))
+    end_of_trend = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
 
-    session = initialize('data/Accounts.gnucash')
+    accounts = parse_walker_parameters(definition.get('accounts', []))
 
-    report = AccountUsageCategories('asdf',
-                                    ['Assets.Current Assets.Joint.Ent.Checking - 10'],
-                                    1)
-    try:
-        payload = report()
-        print payload
-    finally:
-        session.end()
+    data_values = CategoryCollate(lambda: Decimal('0.0'), split_summation)
 
+    for account in account_walker(**accounts):
+        for split in get_splits(account, start_of_trend.date, end_of_trend.date, credit=False):
+
+            transaction = split.transaction
+
+            for transaction_split in [s for s in transaction.splits if s.account.fullname != account.fullname]:
+                data_values.store_value(transaction_split)
+
+    return dict(categories=sorted([[k, v] for k, v in data_values.container.iteritems()], key=itemgetter(0)))

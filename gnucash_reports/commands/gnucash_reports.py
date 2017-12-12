@@ -2,15 +2,17 @@
 This is the main execution program for the reporting library.
 """
 from __future__ import absolute_import
+
 import argparse
-import sys
-import os
-import simplejson as json
 import glob
 import logging
-from yaml import load, dump
+import sys
+
+import os
 import os.path
-import time
+import simplejson as json
+from yaml import load
+
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
@@ -21,9 +23,23 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath(os.getcwd()))
 
 from gnucash_reports.wrapper import initialize
-from gnucash_reports.reports import register_core_reports, build_report
-from gnucash_reports.configuration import register_core_configuration_plugins, configure_application
+from gnucash_reports.reports import run_report
+from gnucash_reports.configuration import configure_application
 from datetime import datetime
+
+
+def load_plugins():
+    import pkg_resources
+
+    # Register the reports
+    for ep in pkg_resources.iter_entry_points(group='gnucash_reports_reports'):
+        loader = ep.load()
+        loader()
+
+    # Register the configuration
+    for ep in pkg_resources.iter_entry_points(group='gnucash_reports_configuration'):
+        loader = ep.load()
+        loader()
 
 
 def main():
@@ -31,12 +47,13 @@ def main():
     Execute main application
     :return:
     """
-    register_core_reports()
-    register_core_configuration_plugins()
+    load_plugins()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', dest='configuration', default='core.yaml',
                         help='core configuration details of the application')
+    parser.add_argument('-r', '--report', dest='report', default=None,
+                        help='only execute the requested report')
 
     args = parser.parse_args()
 
@@ -53,41 +70,37 @@ def main():
 
     all_reports = []
 
-    reports_list = glob.glob(os.path.join(report_location, '*.yaml'))
+    if not args.report:
+        reports_list = glob.glob(os.path.join(report_location, '*.yaml'))
+    else:
+        reports_list = [args.report]
+
     for infile in sorted(reports_list):
 
-        try:
-            print 'Processing: %s' % infile
-            with open(infile) as report_configuration_file:
-                report_configuration = load(report_configuration_file, Loader=Loader)
+        print 'Processing: %s' % infile
+        with open(infile) as report_configuration_file:
+            report_configuration = load(report_configuration_file, Loader=Loader)
 
-                result_definition = dict(name=report_configuration.get('page_name', 'Unnamed Page'),
-                                         reports=[])
+            result_definition = dict(name=report_configuration.get('page_name', 'Unnamed Page'),
+                                     reports=[])
 
-                for report_definition in report_configuration['definitions']:
+            for report_definition in report_configuration['definitions']:
 
-                    _report = build_report(report_definition)
+                result = run_report(report_definition)
 
-                    if _report:
-                        print '  Running: %s' % _report.name
-                        payload = _report()
-                        result_definition['reports'].append(payload)
+                if result:
+                    result_definition['reports'].append(result)
 
-                output_file_name = os.path.split(infile)[-1] + '.json'
+            output_file_name = os.path.split(infile)[-1] + '.json'
 
-                with open(os.path.join(output_location, output_file_name), 'w') as output_file:
-                    json.dump(result_definition, output_file)
-                    all_reports.append(dict(name=result_definition.get('name'), file=output_file_name))
+            with open(os.path.join(output_location, output_file_name), 'w') as output_file:
+                json.dump(result_definition, output_file)
+                all_reports.append(dict(name=result_definition.get('name'), file=output_file_name))
 
-        except Exception as e:
-            print 'Exception caught: %s' % e
-
-    session.end()
-
-    file_modification_time = time.ctime(os.path.getmtime(configuration['gnucash_file']))
+    session.close()
 
     definition_dictionary = dict(
-        modification_time=file_modification_time,
+        modification_time=datetime.now().strftime('%c'),
         last_updated=datetime.now().strftime('%c'),
         reports=all_reports
     )

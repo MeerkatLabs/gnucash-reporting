@@ -2,51 +2,42 @@
 This report needs to go through all of the income transactions and look for credits that are made to the 401k of the
 owner.
 """
-from gnucash_reports.reports.base import Report
-from gnucash_reports.wrapper import get_account, get_decimal, get_splits
-from gnucash_reports.periods import PeriodStart, PeriodEnd
 from datetime import date
 from decimal import Decimal
 
+from gnucash_reports.periods import PeriodStart, PeriodEnd
+from gnucash_reports.wrapper import get_account, get_splits
 
-class Retirement401kReport(Report):
-    report_type = '401k_report'
 
-    def __init__(self, name, income_accounts, retirement_accounts, contribution_limit=None,
-                 period_start=PeriodStart.this_year, period_end=PeriodEnd.this_year):
-        super(Retirement401kReport, self).__init__(name)
+def retirement_401k_report(definition):
 
-        self.income_accounts = income_accounts
-        self.retirement_accounts = retirement_accounts
+    income_accounts = definition.get('income_accounts', [])
+    retirement_accounts = definition.get('retirement_accounts', [])
 
-        self._start = PeriodStart(period_start)
-        self._end = PeriodEnd(period_end)
+    start = PeriodStart(definition.get('period_start', PeriodStart.this_year))
+    end = PeriodEnd(definition.get('period_end', PeriodEnd.this_year))
 
-        if contribution_limit:
-            self.contribution_limit = contribution_limit
-        else:
-            self.contribution_limit = Decimal('18000.0')
+    contribution_limit = definition.get('contribution_limit', Decimal('18000.0'))
 
-    def __call__(self):
-        contribution_total = Decimal('0.0')
-        today = date.today()
-        beginning_of_year = date(today.year, 1, 1)
+    contribution_total = Decimal('0.0')
+    today = date.today()
+    beginning_of_year = date(today.year, 1, 1)
 
-        for account_name in self.income_accounts:
-            account = get_account(account_name)
+    for account_name in income_accounts:
+        account = get_account(account_name)
 
-            for split in get_splits(account, self._start.date, self._end.date):
-                parent = split.parent
+        for split in get_splits(account, start.date, end.date):
+            parent = split.transaction
 
-                for income_split in parent.GetSplitList():
+            for income_split in parent.splits:
 
-                    if income_split.GetAccount().get_full_name() in self.retirement_accounts:
-                        contribution_total += get_decimal(income_split.GetAmount())
+                if income_split.account.fullname in retirement_accounts:
+                    contribution_total += income_split.value
 
-        result = self._generate_result()
-        result['data']['contributionLimit'] = self.contribution_limit
-        result['data']['contribution'] = contribution_total
-        result['data']['dayOfYear'] = (today - beginning_of_year).days + 1
-        result['data']['daysInYear'] = (date(today.year, 12, 31) - beginning_of_year).days + 1
+    return dict(contributionLimit=contribution_limit, contribution=contribution_total,
+                daysOfYear=(today - beginning_of_year).days + 1,
+                daysInYear=(date(today.year, 12, 31) - beginning_of_year).days + 1)
 
-        return result
+
+# Have to change the report_type of this to match what it is called in the viewer.
+retirement_401k_report.report_type = '401k_report'
