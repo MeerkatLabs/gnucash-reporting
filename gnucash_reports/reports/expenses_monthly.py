@@ -2,9 +2,8 @@
 Gathers up all of the expenses and breaks down the values by month.
 """
 import time
+import math
 from operator import itemgetter
-
-import numpy as np
 
 from gnucash_reports.collate.bucket import PeriodCollate, CategoryCollate, AccountCollate
 from gnucash_reports.collate.bucket_generation import decimal_generator, integer_generator
@@ -67,11 +66,13 @@ def expenses_box(definition):
     for key, value in bucket.container.iteritems():
         results.append(float(value))
 
-    return dict(low=np.percentile(results, 0),
-                high=np.percentile(results, 100),
-                q1=np.percentile(results, 25),
-                q2=np.percentile(results, 50),
-                q3=np.percentile(results, 75),)
+    results = sorted(results)
+
+    return dict(low=results[0],
+                high=results[-1],
+                q1=get_median(get_lower_half(results)),
+                q2=get_median(results),
+                q3=get_median(get_upper_half(results)),)
 
 
 def expenses_categories(definition):
@@ -100,3 +101,21 @@ def expense_accounts(definition):
             bucket.store_value(split)
 
     return dict(categories=sorted([[key, value] for key, value in bucket.container.iteritems()], key=itemgetter(0)))
+
+
+def get_median(lst):
+    lst_cnt = len(lst)
+    mid_idx = int(lst_cnt / 2)
+    if lst_cnt % 2 != 0:
+        return lst[mid_idx]
+    return (lst[mid_idx-1] + lst[mid_idx]) / 2
+
+
+def get_lower_half(lst):
+    mid_idx = math.floor(len(lst) / 2)
+    return(lst[0:mid_idx])
+
+
+def get_upper_half(lst):
+    mid_idx = math.ceil(len(lst) / 2)
+    return(lst[mid_idx:])
