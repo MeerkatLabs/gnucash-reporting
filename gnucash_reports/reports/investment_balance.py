@@ -95,7 +95,7 @@ def store_investment(bucket, value):
                 change_amount = -parent_splits.value
 
     if account_type == AccountTypes.mutual_fund or account_type == AccountTypes.asset or \
-       account_type == AccountTypes.equity:
+       account_type == AccountTypes.equity or account_type == AccountTypes.stock:
         # Asset or mutual fund transfer
         bucket['money_in'] += change_amount
     elif account_type == AccountTypes.income:
