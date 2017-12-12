@@ -103,6 +103,8 @@ def expense_accounts(definition):
     return dict(categories=sorted([[key, value] for key, value in bucket.container.iteritems()], key=itemgetter(0)))
 
 
+# Calculating the quartiles based on:
+# https://en.wikipedia.org/wiki/Quartile Method 1
 def get_median(lst):
     lst_cnt = len(lst)
     mid_idx = int(lst_cnt / 2)
@@ -112,10 +114,10 @@ def get_median(lst):
 
 
 def get_lower_half(lst):
-    mid_idx = math.floor(len(lst) / 2)
-    return(lst[0:mid_idx])
+    mid_idx = int(math.floor(len(lst) / 2))
+    return lst[0:mid_idx]
 
 
 def get_upper_half(lst):
-    mid_idx = math.ceil(len(lst) / 2)
-    return(lst[mid_idx:])
+    mid_idx = int(math.ceil(len(lst) / 2))
+    return lst[mid_idx:]
