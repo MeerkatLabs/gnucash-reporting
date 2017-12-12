@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='gnucash-reports',
-    version='',
+    version='0.2.0.dev',
     packages=find_packages(),
     url='',
-    license='BSD-3-Clause',
+    license='MIT',
     author='Robert Robinson',
     author_email='rerobins@meerkatlabs.org',
     description='Generate JSON reports for rendering in a viewer.',
@@ -16,6 +16,14 @@ setup(
                       'piecash==0.13.0',
                       'enum34==1.1.6',
                       ],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Office/Business :: Financial',
+    ],
     entry_points={
         'console_scripts': [
             'gnucash_reports=gnucash_reports.commands.gnucash_reports:main'
