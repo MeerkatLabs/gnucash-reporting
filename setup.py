@@ -12,7 +12,10 @@ setup(
     install_requires=['numpy==1.9.3',
                       'dateutils==0.6.6',
                       'simplejson==3.8.0',
-                      'pyaml==15.8.2'],
+                      'pyaml==15.8.2',
+                      'piecash==0.13.0',
+                      'enum34==1.1.6',
+                      ],
     entry_points={
         'console_scripts': [
             'gnucash_reports=gnucash_reports.commands.gnucash_reports:main'
