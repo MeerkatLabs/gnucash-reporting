@@ -29,9 +29,9 @@ class AccountTypes(enum.Enum):
 gnucash_session = None
 
 
-def initialize(file_uri):
+def initialize(file_uri, read_only=True, do_backup=False):
     global gnucash_session
-    gnucash_session = piecash.open_book(uri_conn=file_uri, open_if_lock=True)
+    gnucash_session = piecash.open_book(uri_conn=file_uri, open_if_lock=True, readonly=read_only, do_backup=do_backup)
     return gnucash_session
 
 

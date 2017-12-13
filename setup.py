@@ -25,7 +25,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'gnucash_reports=gnucash_reports.commands.gnucash_reports:main'
+            'gnucash_reports=gnucash_reports.commands.reports:main',
+            'gnucash_update_prices=gnucash_reports.commands.update_prices:main',
         ],
         'gnucash_reports_reports': [
             'core_reports=gnucash_reports.configuration.register_core:register_core_reports'

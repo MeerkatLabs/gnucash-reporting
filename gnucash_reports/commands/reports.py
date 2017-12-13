@@ -25,21 +25,8 @@ sys.path.insert(0, os.path.abspath(os.getcwd()))
 from gnucash_reports.wrapper import initialize
 from gnucash_reports.reports import run_report
 from gnucash_reports.configuration import configure_application
+from gnucash_reports.utilities import load_plugins
 from datetime import datetime
-
-
-def load_plugins():
-    import pkg_resources
-
-    # Register the reports
-    for ep in pkg_resources.iter_entry_points(group='gnucash_reports_reports'):
-        loader = ep.load()
-        loader()
-
-    # Register the configuration
-    for ep in pkg_resources.iter_entry_points(group='gnucash_reports_configuration'):
-        loader = ep.load()
-        loader()
 
 
 def main():
