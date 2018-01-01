@@ -52,7 +52,7 @@ def budget_level(definition):
 
 def category_budget_level(definition):
     category = definition.pop('category')
-    definition['account'] = get_accounts_for_category(category)
+    definition['accounts'] = get_accounts_for_category(category)
     return budget_level(definition)
 
 

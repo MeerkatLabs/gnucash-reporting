@@ -90,6 +90,7 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
     ignore list.
     :param accounts:
     :param ignores:
+    :param recursive:
     :param place_holders:
     :return:
     """
@@ -123,10 +124,10 @@ def parse_walker_parameters(definition):
         'recursive': True
     }
 
-    if hasattr(definition, 'keys'):
+    if isinstance(definition, dict):
         return_value.update(definition)
-    elif hasattr(definition, 'sort'):
-        return_value.update(accounts=definition)
+    elif isinstance(definition, list) or isinstance(definition, set):
+        return_value.update(accounts=list(definition))
     else:
         return_value.update(accounts=[definition])
 

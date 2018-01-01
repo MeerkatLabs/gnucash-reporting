@@ -2,7 +2,7 @@
 Load the expense categories from the configuration file and provide a means to query the category name from the account
 that it is stored in.
 """
-from gnucash_reports.wrapper import account_walker
+from gnucash_reports.wrapper import account_walker, parse_walker_parameters
 
 _expense_categories = dict()
 _reverse = dict()
@@ -19,16 +19,12 @@ def configure(json_dictionary):
 
     for definition in json_dictionary.get('expenses_categories', []):
         category = definition['name']
-        accounts = definition['accounts']
-        recursive = definition.get('recursive', False)
+        accounts = parse_walker_parameters(definition.get('definition', []))
 
-        if recursive:
-            all_accounts = []
-            for account in account_walker(accounts, place_holders=True):
-                # print 'loading account: %s' % account.fullname
-                all_accounts.append(account.fullname.replace(':', '.'))
-        else:
-            all_accounts = accounts
+        all_accounts = set()
+        for account in account_walker(**accounts):
+            # print 'loading account: %s' % account.fullname
+            all_accounts.add(account.fullname.replace(':', '.'))
 
         for account in all_accounts:
             _reverse[account] = category
