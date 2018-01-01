@@ -5,6 +5,7 @@ from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 
+from gnucash_reports.configuration.current_date import get_today
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.periods import PeriodStart
 from gnucash_reports.wrapper import get_account, get_balance_on_date, account_walker
@@ -51,7 +52,7 @@ def savings_goal_trend(definition):
 
     account = get_account(account_name)
 
-    todays_date = datetime.today()
+    todays_date = get_today()
     beginning_of_month = datetime(todays_date.year, todays_date.month, 1)
 
     start_of_trend = beginning_of_month - relativedelta(months=past_trend)

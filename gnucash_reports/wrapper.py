@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from gnucash_reports.configuration.current_date import get_today
 
 import enum
 import piecash
@@ -58,7 +59,7 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
 
     start_time = datetime.combine(start_date, datetime.min.time())
     if not end_date:
-        end_date = datetime.today()
+        end_date = get_today()
 
     end_time = datetime.combine(end_date, datetime.max.time())
 
@@ -134,7 +135,7 @@ def parse_walker_parameters(definition):
     return return_value
 
 
-def get_balance_on_date(account, date_value=datetime.today(), currency=None):
+def get_balance_on_date(account, date_value=get_today(), currency=None):
 
     date_value = datetime.combine(date_value, datetime.max.time()).replace(microsecond=0, tzinfo=None)
 

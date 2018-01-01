@@ -40,7 +40,7 @@ def budget_level(definition):
             for split in split_list:
                 yearly_balance += split.value
 
-        today = date.today()
+        today = PeriodStart.today.date
         data_payload.update({
             'yearlyBalance': yearly_balance,
             'daysInYear': (date(today.year+1, 1, 1) - date(today.year, 1, 1)).days,

@@ -2,13 +2,13 @@
 Gather information about the balance of the investment accounts.
 """
 import time
-from datetime import datetime
 from decimal import Decimal
 from operator import itemgetter
 
 from dateutils import relativedelta
 
 from gnucash_reports.collate.bucket import PeriodCollate
+from gnucash_reports.configuration.current_date import get_today
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.configuration.investment_allocations import get_asset_allocation
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
@@ -168,7 +168,7 @@ def investment_allocation(definition):
     category_mapping = definition.get('category_mapping', {})
 
     breakdown = dict()
-    today = datetime.today()
+    today = get_today()
     currency = get_currency()
 
     for account in account_walker(**investment_accounts):
