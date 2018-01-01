@@ -41,6 +41,8 @@ def main():
                         help='core configuration details of the application')
     parser.add_argument('-r', '--report', dest='report', default=None,
                         help='only execute the requested report')
+    parser.add_argument('-d', '--date', dest='date', default=datetime.today().strftime('%Y-%m-%d'),
+                        help='date formated in %%Y-%%m-%%d')
 
     args = parser.parse_args()
 
@@ -50,6 +52,8 @@ def main():
         session = initialize(configuration['gnucash_file'])
         output_location = configuration.get('output_directory', 'output')
         report_location = configuration.get('report_definitions', 'reports')
+        global_configuration = configuration.get('global', dict())
+        global_configuration['date'] = args.date
         configure_application(configuration.get('global', dict()))
 
     if not os.path.exists(output_location):

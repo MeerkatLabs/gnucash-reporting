@@ -3,6 +3,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY, YEARLY, DAILY, WEEKLY
 from enum import Enum
+from gnucash_reports.configuration.current_date import get_today
 
 
 class PeriodStart(Enum):
@@ -18,7 +19,7 @@ class PeriodStart(Enum):
 
     @property
     def date(self):
-        today = datetime.today()
+        today = get_today()
 
         if self == PeriodStart.today:
             return today.date()
@@ -61,7 +62,7 @@ class PeriodEnd(Enum):
 
     @property
     def date(self):
-        today = datetime.today()
+        today = get_today()
 
         if self == PeriodEnd.today:
             return today.date()

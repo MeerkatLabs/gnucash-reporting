@@ -55,6 +55,7 @@ def register_core_configuration_plugins():
     from gnucash_reports.configuration.expense_categories import configure as _configure_expense_categories
     from gnucash_reports.configuration.investment_allocations import configure as _configure_investment_allocations
     from gnucash_reports.configuration.alphavantage import configure as _configure_alpha_vantage
+    from gnucash_reports.configuration.current_date import configure as _configure_current_date
 
     _register_configuration_plugin(_configure_currency)
     _register_configuration_plugin(_configure_inflation)
@@ -62,3 +63,4 @@ def register_core_configuration_plugins():
     _register_configuration_plugin(_configure_expense_categories)
     _register_configuration_plugin(_configure_investment_allocations)
     _register_configuration_plugin(_configure_alpha_vantage)
+    _register_configuration_plugin(_configure_current_date)
