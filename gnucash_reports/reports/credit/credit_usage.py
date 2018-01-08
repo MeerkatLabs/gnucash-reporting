@@ -11,20 +11,20 @@ from gnucash_reports.wrapper import get_account, account_walker, get_balance_on_
 def credit_usage(definition):
     credit_accounts = definition.get('credit_accounts', [])
 
-    credit_amount = Decimal(0.0)
+    credit_limit = Decimal(0.0)
     credit_used = Decimal(0.0)
 
     for credit_definition in credit_accounts:
         account = get_account(credit_definition['account'])
         limit = credit_definition.get('limit', '0.0')
 
-        credit_amount += Decimal(limit)
         balance = get_balance_on_date(account)
-        credit_used += balance
+        credit_used -= balance
+        credit_limit += Decimal(limit)
 
     return {
-        'credit_limit': credit_amount + credit_used,
-        'credit_amount': credit_amount
+        'credit_limit': credit_limit,
+        'credit_amount': credit_used
     }
 
 
