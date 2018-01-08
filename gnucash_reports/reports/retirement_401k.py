@@ -23,6 +23,8 @@ def retirement_401k_report(definition):
     today = date.today()
     beginning_of_year = date(today.year, 1, 1)
 
+    retirement_accounts = [account_name.replace(':', '.') for account_name in retirement_accounts]
+
     for account_name in income_accounts:
         account = get_account(account_name)
 
@@ -31,11 +33,13 @@ def retirement_401k_report(definition):
 
             for income_split in parent.splits:
 
-                if income_split.account.fullname in retirement_accounts:
+                account_full_name = income_split.account.fullname.replace(':', '.')
+
+                if account_full_name in retirement_accounts:
                     contribution_total += income_split.value
 
     return dict(contributionLimit=contribution_limit, contribution=contribution_total,
-                daysOfYear=(today - beginning_of_year).days + 1,
+                dayOfYear=(today - beginning_of_year).days + 1,
                 daysInYear=(date(today.year, 12, 31) - beginning_of_year).days + 1)
 
 
