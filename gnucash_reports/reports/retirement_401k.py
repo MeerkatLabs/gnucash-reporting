@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from gnucash_reports.periods import PeriodStart, PeriodEnd
 from gnucash_reports.wrapper import get_account, get_splits
+from gnucash_reports.utilities import clean_account_name
 
 
 def retirement_401k_report(definition):
@@ -23,7 +24,7 @@ def retirement_401k_report(definition):
     today = date.today()
     beginning_of_year = date(today.year, 1, 1)
 
-    retirement_accounts = [account_name.replace(':', '.') for account_name in retirement_accounts]
+    retirement_accounts = [clean_account_name(account_name) for account_name in retirement_accounts]
 
     for account_name in income_accounts:
         account = get_account(account_name)
@@ -33,7 +34,7 @@ def retirement_401k_report(definition):
 
             for income_split in parent.splits:
 
-                account_full_name = income_split.account.fullname.replace(':', '.')
+                account_full_name = clean_account_name(income_split.account.fullname)
 
                 if account_full_name in retirement_accounts:
                     contribution_total += income_split.value

@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from gnucash_reports.configuration.current_date import get_today
+from gnucash_reports.utilities import clean_account_name
 
 import enum
 import piecash
@@ -100,6 +101,8 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
 
     _account_list = [a for a in accounts]
 
+    ignores = [clean_account_name(account_name) for account_name in ignores]
+
     while _account_list:
         account_name = _account_list.pop()
         if account_name in ignores:
@@ -110,7 +113,7 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
             yield account
 
         if recursive:
-            _account_list += [a.fullname for a in account.children]
+            _account_list += [clean_account_name(a.fullname) for a in account.children]
 
 
 def parse_walker_parameters(definition):

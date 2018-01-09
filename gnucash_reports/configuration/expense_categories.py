@@ -3,6 +3,7 @@ Load the expense categories from the configuration file and provide a means to q
 that it is stored in.
 """
 from gnucash_reports.wrapper import account_walker, parse_walker_parameters
+from gnucash_reports.utilities import clean_account_name
 
 _expense_categories = dict()
 _reverse = dict()
@@ -24,7 +25,7 @@ def configure(json_dictionary):
         all_accounts = set()
         for account in account_walker(**accounts):
             # print 'loading account: %s' % account.fullname
-            all_accounts.add(account.fullname.replace(':', '.'))
+            all_accounts.add(clean_account_name(account.fullname))
 
         for account in all_accounts:
             _reverse[account] = category
@@ -39,7 +40,7 @@ def get_category_for_account(account_name):
     :return:
     """
     # Translate the account name to use the common formatting.
-    account_name = account_name.replace(':', '.')
+    account_name = clean_account_name(account_name)
     value = _reverse.get(account_name, _default_category)
 
     if value == _default_category:
