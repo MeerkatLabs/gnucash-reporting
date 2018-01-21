@@ -77,7 +77,7 @@ def expenses_box(definition):
 
 def expenses_categories(definition):
     expense_accounts = parse_walker_parameters(definition.get('expenses_base', []))
-    start_period = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
+    start_period = PeriodStart(definition.get('period_start', PeriodStart.this_month))
     end_period = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
 
     bucket = CategoryCollate(decimal_generator, split_summation)
