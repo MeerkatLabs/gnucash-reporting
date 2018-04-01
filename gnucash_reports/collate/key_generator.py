@@ -4,6 +4,7 @@ import re
 from dateutil.rrule import rrule, MONTHLY
 
 from gnucash_reports.configuration.expense_categories import get_category_for_account
+from gnucash_reports.utilities import clean_account_name
 
 
 def monthly(data_key):
@@ -33,7 +34,7 @@ def category_key_fetcher(data_key):
     :param data_key:  split
     :return:
     """
-    return get_category_for_account(data_key.account.fullname.replace(':', '.'))
+    return get_category_for_account(clean_account_name(data_key.account.fullname))
 
 
 def account_key_fetcher(data_key):

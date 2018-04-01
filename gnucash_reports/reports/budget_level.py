@@ -35,7 +35,7 @@ def budget_level(definition):
         yearly_balance = Decimal('0.0')
 
         for account in account_walker(**accounts):
-            split_list = get_splits(account, PeriodStart.this_year.date, PeriodEnd.this_year.date, debit=False)
+            split_list = get_splits(account, PeriodStart.this_year.date, PeriodEnd.today.date, debit=False)
 
             for split in split_list:
                 yearly_balance += split.value

@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from gnucash_reports.configuration.current_date import get_today
+from gnucash_reports.utilities import clean_account_name
 
 import enum
 import piecash
@@ -29,6 +30,8 @@ class AccountTypes(enum.Enum):
 
 gnucash_session = None
 
+_account_cache = dict()
+
 
 def initialize(file_uri, read_only=True, do_backup=False):
     global gnucash_session
@@ -41,14 +44,28 @@ def get_session():
 
 
 def get_account(account_name):
+    global _account_cache
     current_account = gnucash_session.root_account
 
+    current_account_name = ''
+
     for child_name in re.split('[:.]', account_name):
-        account = gnucash_session.session.query(piecash.Account).filter(piecash.Account.parent == current_account,
-                                                                        piecash.Account.name == child_name).one_or_none()
+
+        if current_account_name:
+            current_account_name = current_account_name + '.' + child_name
+        else:
+            current_account_name = child_name
+
+        account = _account_cache.get(current_account_name, None)
 
         if account is None:
-            raise RuntimeError('Account %s is not found in %s' % (account_name, current_account))
+            account = gnucash_session.session.query(piecash.Account).filter(piecash.Account.parent == current_account,
+                                                                            piecash.Account.name == child_name).one_or_none()
+
+            if account is None:
+                raise RuntimeError('Account %s is not found in %s' % (account_name, current_account))
+
+            _account_cache[current_account_name] = account
 
         current_account = account
 
@@ -104,6 +121,8 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
 
     _account_list = [a for a in accounts]
 
+    ignores = [clean_account_name(account_name) for account_name in ignores]
+
     while _account_list:
         account_name = _account_list.pop()
         if account_name in ignores:
@@ -114,7 +133,7 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
             yield account
 
         if recursive:
-            _account_list += [a.fullname for a in account.children]
+            _account_list += [clean_account_name(a.fullname) for a in account.children]
 
 
 def parse_walker_parameters(definition):

@@ -13,3 +13,8 @@ def load_plugins():
     for ep in pkg_resources.iter_entry_points(group='gnucash_reports_configuration'):
         loader = ep.load()
         loader()
+
+
+def clean_account_name(account_name):
+    """Replace account names with colons as separators with periods as separators."""
+    return account_name.replace(':', '.')
