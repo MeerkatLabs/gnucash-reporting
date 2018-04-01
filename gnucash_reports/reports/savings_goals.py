@@ -8,13 +8,11 @@ from dateutil.rrule import rrule, MONTHLY
 from gnucash_reports.configuration.current_date import get_today
 from gnucash_reports.configuration.currency import get_currency
 from gnucash_reports.periods import PeriodStart
-from gnucash_reports.wrapper import get_account, get_balance_on_date, account_walker
+from gnucash_reports.wrapper import get_account, get_balance_on_date, account_walker, parse_walker_parameters
 
 
 def savings_goal(definition):
-    accounts = definition['account']
-    if isinstance(accounts, basestring):
-        accounts = [accounts]
+    walker_params = parse_walker_parameters(definition['savings'])
 
     goal_amount = Decimal(definition.get('goal', Decimal(0.0)))
 
@@ -27,17 +25,9 @@ def savings_goal(definition):
     total_balance = Decimal('0.0')
     currency = get_currency()
 
-    for account_description in accounts:
-        multiplier = Decimal('1.0')
-        if isinstance(account_description, basestring):
-            account = account_description
-        else:
-            account = account_description[0]
-            multiplier = Decimal(account_description[1])
-
-        for account_name in account_walker([account]):
-            balance = get_balance_on_date(account_name, as_of.date, currency)
-            total_balance += (balance * multiplier)
+    for account in account_walker(**walker_params):
+        balance = get_balance_on_date(account, as_of.date, currency)
+        total_balance += balance
 
     for contribution in contributions:
         total_balance += Decimal(contribution)

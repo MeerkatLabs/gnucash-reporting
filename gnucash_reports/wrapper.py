@@ -98,6 +98,10 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
     if not ignores:
         ignores = []
 
+    # Allow for a none account list to be provided
+    if accounts is None:
+        accounts = []
+
     _account_list = [a for a in accounts]
 
     while _account_list:
@@ -124,6 +128,10 @@ def parse_walker_parameters(definition):
         'place_holders': False,
         'recursive': True
     }
+
+    # Allow for a none definition to be provided and overwrite to an empty list
+    if definition is None:
+        definition = []
 
     if isinstance(definition, dict):
         return_value.update(definition)
