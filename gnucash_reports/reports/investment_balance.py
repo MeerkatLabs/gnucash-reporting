@@ -63,16 +63,39 @@ def investment_balance(definition):
         dividends[key] = last_dividend
         values[key] = get_balance_on_date(account, date, currency)
 
+    # Sort the purchases and dividends so can keep track of purchases and dividends while the current value is
+    # being put into place.
+    sorted_purchases = sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0))
+    sorted_dividend = sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0))
+
+    # Index of where in the sorted purchases and dividends we are when updating the values
+    sorted_index = 0
+    sorted_length = len(sorted_purchases)
+
     # Now get all of the price updates in the database.
     for price in get_prices(account.commodity, currency):
         date = time.mktime(price.date.timetuple())
 
-        values[date] = max(values.get(date, Decimal('0.0')),
-                           get_balance_on_date(account, price.date, currency))
+        # Find out where in the purchases/dividends this record would fall by iterating through the sorted list until
+        # we pass the current date value, then use the previous key
+        test_sorted_index = sorted_index
+        while test_sorted_index < sorted_length and sorted_purchases[test_sorted_index][0] <= date:
+            test_sorted_index += 1
 
-    return dict(purchases=sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0)),
-                dividend=sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0)),
-                value=sorted([(key, value) for key, value in values.iteritems()], key=itemgetter(0)))
+        # Skip the first record, it's already handled by the purchase population code.  Otherwise put in placeholder
+        # data so that the number of records is the same in all of the data structures.
+        if test_sorted_index != 0:
+            purchases[date] = sorted_purchases[test_sorted_index-1][1]
+            dividends[date] = sorted_dividend[test_sorted_index-1][1]
+            values[date] = max(values.get(date, Decimal('0.0')), get_balance_on_date(account, price.date, currency))
+
+    # Resort all of the dictionaries into the appropriate pairs so that the data is displayed correctly by the
+    # viewer.
+    values = sorted([(key, value) for key, value in values.iteritems()], key=itemgetter(0))
+    purchases = sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0))
+    dividend = sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0))
+
+    return dict(purchases=purchases, dividend=dividend, value=values)
 
 
 def investment_bucket_generator():
