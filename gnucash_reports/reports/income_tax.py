@@ -9,15 +9,36 @@ from gnucash_reports.wrapper import get_splits, account_walker, parse_walker_par
 from gnucash_reports.utilities import clean_account_name
 
 
-def income_tax(definition):
-    income_accounts = parse_walker_parameters(definition.get('income_accounts', []))
-    tax_accounts = parse_walker_parameters(definition.get('tax_accounts', []))
-    period_start = PeriodStart(definition.get('period_start', PeriodStart.this_year))
-    period_end = PeriodEnd(definition.get('period_end', PeriodEnd.this_year))
-    tax_name = definition.get('tax_name', 'federal')
-    tax_status = definition.get('tax_status', 'single')
-    deductions = definition.get('deductions', [])
-    deduction_accounts = parse_walker_parameters(definition.get('deduction_accounts', []))
+def income_tax(income=None, tax=None, start=PeriodStart.this_year, end=PeriodEnd.this_year,
+               tax_name='federal', tax_status='single', deductions=None, deduction=None):
+    """
+    Walk through all of the income accounts provided to determine tax owed based on tax tables.  Then use deductions,
+    deduction_accounts to reduce income, and then calculate a simple tax owed based on the tax_name and tax_status
+    information.  Will only use the account data between the start and end values.
+    :param income: account walker parameters for the income accounts
+    :param tax: account walker parameters for the tax paid accounts
+    :param start: Period start date
+    :param end: Period end date,
+    :param tax_name: name of tax table to use
+    :param tax_status: name of tax sub-table to use
+    :param deductions: list of decimal definitions that should be deducted from the taxable income
+    :param deduction: account walker parameters that should be used to reduce the taxable income as well
+    :return: dictionary containing
+    income - total taxable income made during the period
+    tax_value - total calculated tax based on income value
+    taxes_paid - total taxes paid into the tax accounts
+    """
+
+    income_accounts = income or []
+    tax_accounts = tax or []
+    deductions = deductions or []
+    deduction_accounts = deduction or []
+
+    income_accounts = parse_walker_parameters(income_accounts)
+    tax_accounts = parse_walker_parameters(tax_accounts)
+    period_start = PeriodStart(start)
+    period_end = PeriodEnd(end)
+    deduction_accounts = parse_walker_parameters(deduction_accounts)
 
     total_income = Decimal(0.0)
     total_taxes = Decimal(0.0)
@@ -58,4 +79,4 @@ def income_tax(definition):
 
     tax_value = calculate_tax(tax_name, tax_status, total_income)
 
-    return dict(income=total_income, tax_value=tax_value, taxes_paid=total_taxes)
+    return {'income': total_income, 'tax_value': tax_value, 'taxes_paid': total_taxes}

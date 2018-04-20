@@ -7,6 +7,9 @@ from gnucash_reports.configuration.current_date import get_today
 
 
 class PeriodStart(Enum):
+    """
+    Enumeration that can be used for defining and calculating a period start value.
+    """
     today = 'today'
     this_month = 'start_of_this_month'
     previous_month = 'start_of_previous_month'
@@ -19,6 +22,7 @@ class PeriodStart(Enum):
 
     @property
     def date(self):
+        """ The date associated with the period start based on the configuration value of what today is. """
         today = get_today()
 
         if self == PeriodStart.today:
@@ -51,6 +55,9 @@ class PeriodStart(Enum):
 
 
 class PeriodEnd(Enum):
+    """
+    Enumeration for defining and calculating the date for period end value.
+    """
     today = 'today'
     this_month = 'end_of_this_month'
     previous_month = 'end_of_previous_month'
@@ -62,6 +69,7 @@ class PeriodEnd(Enum):
 
     @property
     def date(self):
+        """ The date associated with the period end based on the configuration value of what today is. """
         today = get_today()
 
         if self == PeriodEnd.today:
@@ -92,6 +100,9 @@ class PeriodEnd(Enum):
 
 
 class PeriodSize(Enum):
+    """
+    Enumeration for defining the step size between a period start and period end value.
+    """
     day = 'day'
     week = 'week'
     two_week = 'two_week'
@@ -100,6 +111,7 @@ class PeriodSize(Enum):
 
     @property
     def frequency(self):
+        """Returns dateutil.rrule associated with the enumeration."""
         if self == PeriodSize.day:
             return DAILY
         elif self == PeriodSize.week or self == PeriodSize.two_week:
@@ -114,6 +126,7 @@ class PeriodSize(Enum):
 
     @property
     def interval(self):
+        """Returns a value that acts as a multiplier for the rrule value."""
         if self == PeriodSize.two_week:
             return 2
         else:

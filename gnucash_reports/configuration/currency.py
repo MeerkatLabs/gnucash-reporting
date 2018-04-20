@@ -6,9 +6,10 @@ from gnucash_reports.wrapper import get_account
 _currency = None
 
 
-def configure(json_configuration):
+def configure(configuration):
+    """Configure the base currency value from the currency that is defined for a specified account."""
     global _currency
-    account_name = json_configuration.get('currency', dict()).get('account_name', 'Income')
+    account_name = configuration.get('currency', dict()).get('account_name', 'Income')
 
     _currency = get_account(account_name).commodity
 

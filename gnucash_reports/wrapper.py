@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from gnucash_reports.configuration.current_date import get_today
+from gnucash_reports.configuration.expense_categories import get_accounts_for_category
 from gnucash_reports.utilities import clean_account_name
 
 import enum
@@ -10,6 +11,9 @@ import re
 
 @enum.unique
 class AccountTypes(enum.Enum):
+    """
+    Enumeration that will contain the account types.
+    """
     none = 'NONE'
     bank = 'BANK'
     cash = 'CASH'
@@ -28,24 +32,33 @@ class AccountTypes(enum.Enum):
     trading = 'TRADING'
 
 
-gnucash_session = None
+_book = None
 
 _account_cache = dict()
 
 
 def initialize(file_uri, read_only=True, do_backup=False):
-    global gnucash_session
-    gnucash_session = piecash.open_book(uri_conn=file_uri, open_if_lock=True, readonly=read_only, do_backup=do_backup)
-    return gnucash_session
-
-
-def get_session():
-    return gnucash_session
+    """
+    Connect to the uri provided.
+    :param file_uri: uri containing gnucash data
+    :param read_only: open as read_only
+    :param do_backup: do a backup first
+    :return: gnucash book object
+    """
+    global _book
+    _book = piecash.open_book(uri_conn=file_uri, open_if_lock=True, readonly=read_only, do_backup=do_backup)
+    return _book
 
 
 def get_account(account_name):
+    """
+    Retrieve the account object based on the account name provided.  Raises an exception if the account or any of it's
+    parents cannot be found.
+    :param account_name: name of the account to retrieve
+    :return: the account object.
+    """
     global _account_cache
-    current_account = gnucash_session.root_account
+    current_account = _book.root_account
 
     current_account_name = ''
 
@@ -59,8 +72,8 @@ def get_account(account_name):
         account = _account_cache.get(current_account_name, None)
 
         if account is None:
-            account = gnucash_session.session.query(piecash.Account).filter(piecash.Account.parent == current_account,
-                                                                            piecash.Account.name == child_name).one_or_none()
+            account = _book.session.query(piecash.Account).filter(piecash.Account.parent == current_account,
+                                                                  piecash.Account.name == child_name).one_or_none()
 
             if account is None:
                 raise RuntimeError('Account %s is not found in %s' % (account_name, current_account))
@@ -73,6 +86,15 @@ def get_account(account_name):
 
 
 def get_splits(account, start_date, end_date=None, credit=True, debit=True):
+    """
+    Return all of the splits associated with the account.
+    :param account: account object
+    :param start_date: start date to fetch splits for
+    :param end_date: end date to fetch splits for
+    :param credit: should credit splits be returned
+    :param debit: should debit splits be returned
+    :return: list of the splits
+    """
 
     start_time = datetime.combine(start_date, datetime.min.time())
     if not end_date:
@@ -85,19 +107,25 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
 
     result = []
 
-    split_query = gnucash_session.session.query(piecash.Split).filter(
-        piecash.Split.account == account,
-        piecash.Split.transaction.has(piecash.Transaction.post_date >= start_time),
-        piecash.Split.transaction.has(piecash.Transaction.post_date <= end_time)
-    )
+    filters = [piecash.Split.account == account,
+               piecash.Transaction.post_date >= start_time,
+               piecash.Transaction.post_date <= end_time]
+
+    # Filter out the credit and debits at the database level instead of in this script
+    if credit and not debit:
+        filters.append(
+            piecash.Split.value > Decimal('0.0')
+        )
+    elif debit and not credit:
+        filters.append(
+            piecash.Split.value < Decimal('0.0')
+        )
+
+    split_query = _book.session.query(piecash.Split).join(piecash.Transaction).filter(*filters)
+    split_query = split_query.order_by(piecash.Transaction._post_date)
 
     for split in split_query:
-        is_credit = split.value > 0
-
-        if credit and is_credit:
-            result.append(split)
-        elif debit and not is_credit:
-            result.append(split)
+        result.append(split)
 
     return result
 
@@ -106,11 +134,10 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
     """
     Generator method that will recursively walk the list of accounts provided, ignoring the accounts that are in the
     ignore list.
-    :param accounts:
-    :param ignores:
-    :param recursive:
-    :param place_holders:
-    :return:
+    :param accounts: list of accounts to start processing
+    :param ignores: any accounts that should be ignored
+    :param recursive: walk through the children of the accounts in the list
+    :param place_holders: return place holder accounts
     """
     if not ignores:
         ignores = []
@@ -139,13 +166,18 @@ def account_walker(accounts, ignores=None, place_holders=False, recursive=True, 
 def parse_walker_parameters(definition):
     """
     convert the incoming definition into a kwargs that can be used for the account walker.
-    :param definition:
-    :return:
+    :param definition: dictionary, list, or string containing account definitions.
+    :return: dictionary containing:
+    accounts - list of accounts to walk through
+    ignores - list of accounts to ignore while walking through the accounts
+    place_holders - should place holder accounts be processed
+    recursive - should the children accounts be processed
     """
     return_value = {
         'ignores': None,
         'place_holders': False,
-        'recursive': True
+        'recursive': True,
+        'name': None
     }
 
     # Allow for a none definition to be provided and overwrite to an empty list
@@ -153,20 +185,45 @@ def parse_walker_parameters(definition):
         definition = []
 
     if isinstance(definition, dict):
+
+        # If the definition has a defined category, then this will override all of the other parameters.  Category
+        # definitions have already been processed account walkers, and therefore should not contain place_holders
+        # or recursive values.
+        if 'category' in definition:
+            definition.update({
+                'ignores': None,
+                'place_holders': False,
+                'recursive': False,
+                'accounts': get_accounts_for_category(definition['category']),
+            })
+
         return_value.update(definition)
     elif isinstance(definition, list) or isinstance(definition, set):
         return_value.update(accounts=list(definition))
     else:
         return_value.update(accounts=[definition])
 
+    # Set a name value for the account walker parameters to a default which is the leaf name of the first account
+    if return_value['name'] is None:
+        if return_value['accounts']:
+            return_value['name'] = clean_account_name(return_value['accounts'][0]).split('.')[-1]
+        else:
+            return_value['name'] = 'None'
+
     return return_value
 
 
 def get_balance_on_date(account, date_value=get_today(), currency=None):
-
+    """
+    Step through the splits in the account and return the value in the currency requested.
+    :param account: account to fetch the splits for
+    :param date_value: the date value to fetch the balance as of
+    :param currency:  the currency to calculate the value in.  If none, uses the accounts currency.
+    :return: amount that the account is worth as of date.
+    """
     date_value = datetime.combine(date_value, datetime.max.time()).replace(microsecond=0, tzinfo=None)
 
-    splits = gnucash_session.session.query(piecash.Split).filter(
+    splits = _book.session.query(piecash.Split).filter(
         piecash.Split.account == account,
         piecash.Split.transaction.has(piecash.Transaction.post_date < date_value)
     ).all()
@@ -179,7 +236,7 @@ def get_balance_on_date(account, date_value=get_today(), currency=None):
             # database.
             if currency.mnemonic != account.commodity.mnemonic:
 
-                price_value = gnucash_session.session.query(piecash.Price).filter(
+                price_value = _book.session.query(piecash.Price).filter(
                     piecash.Price.commodity == account.commodity,
                     piecash.Price.currency == currency,
                     piecash.Price.date <= date_value,
@@ -231,7 +288,7 @@ def get_prices(commodity, currency):
     :param currency:
     :return:
     """
-    price_list = gnucash_session.session.query(piecash.Price).filter(
+    price_list = _book.session.query(piecash.Price).filter(
         piecash.Price.commodity == commodity,
         piecash.Price.currency == currency
         ).order_by(piecash.Price.date.desc()).all()

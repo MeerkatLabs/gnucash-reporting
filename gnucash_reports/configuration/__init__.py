@@ -1,1 +1,1 @@
-from .base import configure_application
+from gnucash_reports.configuration.base import configure_application

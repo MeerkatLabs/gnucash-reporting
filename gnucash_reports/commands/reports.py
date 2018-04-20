@@ -6,11 +6,16 @@ from __future__ import absolute_import
 import argparse
 import glob
 import logging
-import sys
 
 import os
-import os.path
 import simplejson as json
+
+from gnucash_reports.wrapper import initialize
+from gnucash_reports.reports import run_report
+from gnucash_reports.configuration import configure_application
+from gnucash_reports.utilities import load_plugins
+from datetime import datetime
+
 from yaml import load
 
 try:
@@ -19,14 +24,6 @@ except ImportError:
     from yaml import Loader, Dumper
 
 logger = logging.getLogger(__name__)
-
-sys.path.insert(0, os.path.abspath(os.getcwd()))
-
-from gnucash_reports.wrapper import initialize
-from gnucash_reports.reports import run_report
-from gnucash_reports.configuration import configure_application
-from gnucash_reports.utilities import load_plugins
-from datetime import datetime
 
 
 def main():
@@ -77,7 +74,7 @@ def main():
 
             for report_definition in report_configuration['definitions']:
 
-                result = run_report(report_definition)
+                result = run_report(**report_definition)
 
                 if result:
                     result_definition['reports'].append(result)

@@ -38,7 +38,8 @@ def main():
         if value is None:
             continue
 
-        print 'Setting value of: %s to %s %s for date: %s' % (commodity.mnemonic, value, currency.get_currency(), quote_date)
+        print 'Setting value of: %s to %s %s for date: %s' % (commodity.mnemonic, value, currency.get_currency(),
+                                                              quote_date)
 
         Price(currency=currency.get_currency(),
               commodity=commodity,

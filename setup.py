@@ -1,14 +1,25 @@
 from setuptools import setup, find_packages
+from os import path
+from codecs import open
+
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 
 setup(
     name='gnucash-reports',
-    version='0.2.0.dev',
+    version='0.2.0',
     packages=find_packages(),
-    url='',
+    url='https://github.com/MeerkatLabs/gnucash-reports',
     license='MIT',
     author='Robert Robinson',
     author_email='rerobins@meerkatlabs.org',
     description='Generate JSON reports for rendering in a viewer.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     install_requires=['dateutils==0.6.6',
                       'simplejson==3.8.0',
                       'pyaml==15.8.2',

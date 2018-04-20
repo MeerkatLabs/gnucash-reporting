@@ -22,34 +22,45 @@ def register_plugin(report, report_type=None):
             _reports[report.func_name] = report
 
 
-def run_report(report_definition):
-    report_type = report_definition.get('type', 'UNDEFINED_REPORT')
-    _report = _reports.get(report_type, None)
+def run_report(type='UNDEFINED_REPORT', name='UNTITLED_REPORT', description=None, definition=None):
+    """
+    Execute the report as defined by arguments.
+    :param type: string containing the report type.
+    :param name: string containing the report name
+    :param description: string containing a description
+    :param definition: a dictionary containing the report configuration parameters
+    :return:
+    """
+    definition = definition or {}
+
+    _report = _reports.get(type, None)
 
     if _report:
-        name = report_definition.get('name', 'UNTITLED_REPORT')
-        description = report_definition.get('description', None)
-        definition = report_definition.get('definition', {})
-
-        payload = _report(definition)
+        payload = _report(**definition)
 
         return {
             'name': name,
             'description': description,
-            'type': report_type,
+            'type': type,
             'data': payload
         }
 
-    print 'Could not find report by name: %s' % report_type
+    print 'Could not find report by name: %s' % type
     return None
 
 
-def multi_report(definition):
-    report_definitions = definition.get('reports', [])
+def multi_report(reports=None):
+    """
+    Report that will calculate multiple reports and store the results.
+    :param reports: list of reports to execute
+    :return: dictionary containing
+    reports - results of the reports that were executed
+    """
+    report_definitions = reports or []
 
     report_results = []
     for report in report_definitions:
-        _result = run_report(report)
+        _result = run_report(**report)
         if _result:
             report_results.append(_result)
 

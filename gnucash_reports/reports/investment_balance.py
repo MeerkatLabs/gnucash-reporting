@@ -3,9 +3,9 @@ Gather information about the balance of the investment accounts.
 """
 import time
 from decimal import Decimal
-from operator import itemgetter
 
 from dateutils import relativedelta
+from operator import itemgetter
 
 from gnucash_reports.collate.bucket import PeriodCollate
 from gnucash_reports.configuration.current_date import get_today
@@ -14,10 +14,20 @@ from gnucash_reports.configuration.investment_allocations import get_asset_alloc
 from gnucash_reports.periods import PeriodStart, PeriodEnd, PeriodSize
 from gnucash_reports.wrapper import get_account, get_balance_on_date, AccountTypes, \
     account_walker, get_splits, get_corr_account_full_name, get_prices, parse_walker_parameters
+from gnucash_reports.utilities import time_series_dict_to_list
 
 
-def investment_balance(definition):
-    account = get_account(definition['account'])
+def investment_balance(account):
+    """
+    Generate report that calculates purchases, dividends, and current worth of the investment accounts provided.
+    :param account: investment account definition
+    :return: dictionary giving time series for the following information
+    value - date/value tuples containing value in currency
+    purchases - date/value tuples containing purchase information in currency
+    dividend - date/value tuples containing dividend information in currency
+    """
+    # TODO: Change this to be account walker parameters
+    account = get_account(account)
 
     last_dividend = Decimal('0.0')
     last_purchase = Decimal('0.0')
@@ -38,10 +48,9 @@ def investment_balance(definition):
         # Store previous data
         if len(purchases):
             previous_date = date - relativedelta(days=1)
-            previous_date_key = time.mktime(previous_date.timetuple())
-            purchases[previous_date_key] = last_purchase
-            dividends[previous_date_key] = last_dividend
-            values[previous_date_key] = get_balance_on_date(account, previous_date, currency)
+            purchases[previous_date] = last_purchase
+            dividends[previous_date] = last_dividend
+            values[previous_date] = get_balance_on_date(account, previous_date, currency)
 
         # Find the correct amount that was paid from the account into this account.
         change_amount = split.value
@@ -58,15 +67,15 @@ def investment_balance(definition):
         else:
             last_dividend += split.value
 
-        key = time.mktime(date.timetuple())
-        purchases[key] = last_purchase
-        dividends[key] = last_dividend
-        values[key] = get_balance_on_date(account, date, currency)
+        purchases[date] = last_purchase
+        dividends[date] = last_dividend
+        values[date] = get_balance_on_date(account, date, currency)
 
     # Sort the purchases and dividends so can keep track of purchases and dividends while the current value is
-    # being put into place.
-    sorted_purchases = sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0))
-    sorted_dividend = sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0))
+    # being put into place.  Because this is not the final value of the list, don't need to worry about converting the
+    # dates into floats.
+    sorted_purchases = time_series_dict_to_list(purchases, key=None)
+    sorted_dividend = time_series_dict_to_list(dividends, key=None)
 
     # Index of where in the sorted purchases and dividends we are when updating the values
     sorted_index = 0
@@ -74,7 +83,7 @@ def investment_balance(definition):
 
     # Now get all of the price updates in the database.
     for price in get_prices(account.commodity, currency):
-        date = time.mktime(price.date.timetuple())
+        date = price.date
 
         # Find out where in the purchases/dividends this record would fall by iterating through the sorted list until
         # we pass the current date value, then use the previous key
@@ -91,18 +100,28 @@ def investment_balance(definition):
 
     # Resort all of the dictionaries into the appropriate pairs so that the data is displayed correctly by the
     # viewer.
-    values = sorted([(key, value) for key, value in values.iteritems()], key=itemgetter(0))
-    purchases = sorted([(key, value) for key, value in purchases.iteritems()], key=itemgetter(0))
-    dividend = sorted([(key, value) for key, value in dividends.iteritems()], key=itemgetter(0))
+    values = time_series_dict_to_list(values)
+    purchases = time_series_dict_to_list(purchases)
+    dividend = time_series_dict_to_list(dividends)
 
-    return dict(purchases=purchases, dividend=dividend, value=values)
+    return {'purchases': purchases, 'dividend': dividend, 'value': values}
 
 
 def investment_bucket_generator():
-    return dict(money_in=Decimal('0.0'), income=Decimal('0.0'), expense=Decimal('0.0'))
+    """
+    Bucket generator that will store purchases, income and expenses for the transactions into an account.
+    :return: dictionary containing the default values of the buckets.
+    """
+    return {'money_in': Decimal('0.0'), 'income': Decimal('0.0'), 'expense': Decimal('0.0')}
 
 
 def store_investment(bucket, value):
+    """
+    How to store the split information into the bucket provided.
+    :param bucket: bucket for the time value that the split belongs to
+    :param value: transaction split object
+    :return: bucket
+    """
     other_account_name = get_corr_account_full_name(value)
     other_account = get_account(other_account_name)
 
@@ -131,11 +150,33 @@ def store_investment(bucket, value):
     return bucket
 
 
-def investment_trend(definition):
-    investment_accounts = parse_walker_parameters(definition.get('investment_accounts', []))
-    period_start = PeriodStart(definition.get('period_start', PeriodStart.this_month_year_ago))
-    period_end = PeriodEnd(definition.get('period_end', PeriodEnd.this_month))
-    period_size = PeriodSize(definition.get('period_size', PeriodSize.month))
+def investment_trend(investment_accounts=None, start=PeriodStart.this_month_year_ago, end=PeriodEnd.this_month,
+                     period_size=PeriodSize.month):
+    """
+    Report showing how the investment has changed over a period of time.  This report provides data based on the period
+    size provided in the arguments.
+    :param investment_accounts: account walker parameters for all of the accounts that this report should provide
+    data on
+    :param start: the start time frame of the report
+    :param end: the end time frame of the report
+    :param period_size: the step size between start and end
+    :return: dictionary containing the following
+    start_value - no clue
+    income - time series data containing the income generated by account (dividends)
+    money_in - time series data containing the purchases into the accounts
+    expense - time series data containing the expenses of the accounts
+    value - time series data containing the current value of the accounts
+    basis - time series data containing the basis value of the accounts (not sure if this is correct)
+    """
+
+    # TODO: Figure out what this report is really doing with start_value and basis values. Verify they are calculated
+    # correctly.
+    investment_accounts = investment_accounts or []
+
+    investment_accounts = parse_walker_parameters(investment_accounts)
+    period_start = PeriodStart(start)
+    period_end = PeriodEnd(end)
+    period_size = PeriodSize(period_size)
 
     investment_value = dict()
     buckets = PeriodCollate(period_start.date, period_end.date,
@@ -160,18 +201,10 @@ def investment_trend(definition):
 
     results = {
         'start_value': start_value,
-        'income': sorted(
-            [(time.mktime(key.timetuple()), value['income']) for key, value in buckets.container.iteritems()],
-            key=itemgetter(0)),
-        'money_in': sorted(
-            [(time.mktime(key.timetuple()), value['money_in']) for key, value in buckets.container.iteritems()],
-            key=itemgetter(0)),
-        'expense': sorted(
-            [(time.mktime(key.timetuple()), value['expense']) for key, value in buckets.container.iteritems()],
-            key=itemgetter(0)),
-        'value': sorted(
-            [[time.mktime(key.timetuple()), value] for key, value in investment_value.iteritems()],
-        ),
+        'income': time_series_dict_to_list(buckets.container, value=lambda x: x['income']),
+        'money_in': time_series_dict_to_list(buckets.container, value=lambda x: x['money_in']),
+        'expense': time_series_dict_to_list(buckets.container, value=lambda x: x['expense']),
+        'value': time_series_dict_to_list(investment_value),
         'basis': sorted(
             [[time.mktime(key.timetuple()), Decimal('0.0')] for key in buckets.container.keys()],
             key=itemgetter(0))
@@ -186,9 +219,17 @@ def investment_trend(definition):
     return results
 
 
-def investment_allocation(definition):
-    investment_accounts = parse_walker_parameters(definition.get('investment_accounts', []))
-    category_mapping = definition.get('category_mapping', {})
+def investment_allocation(investment_accounts=None):
+    """
+    Investment allocation report.  Walks through all of the investment accounts and determines the breakdowns of the
+    assets based on the category mapping data.
+    :param investment_accounts: the accounts to walk through when calculation asset breakdown
+    :return: dictionary containing
+    categories - list of tuples containing human readable term key to the value contained in the investment accounts.
+    """
+    investment_accounts = investment_accounts or []
+
+    investment_accounts = parse_walker_parameters(investment_accounts)
 
     breakdown = dict()
     today = get_today()
@@ -203,5 +244,5 @@ def investment_allocation(definition):
         for key, value in results.iteritems():
             breakdown[key] = breakdown.get(key, Decimal('0.0')) + value
 
-    return dict(categories=sorted([[category_mapping.get(key, key), value] for key, value in breakdown.iteritems()],
+    return dict(categories=sorted([[key.replace('_', ' ').title(), value] for key, value in breakdown.iteritems()],
                                   key=itemgetter(0)))

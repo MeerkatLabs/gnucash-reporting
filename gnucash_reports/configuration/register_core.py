@@ -5,16 +5,16 @@ Register the core reports and configuration details for the framework.
 
 def register_core_reports():
     """Entry point that registers core reports."""
-    from gnucash_reports.reports.savings_goals import savings_goal, savings_goal_trend
+    from gnucash_reports.reports.savings_goals import savings_goal
     from gnucash_reports.reports.account_levels import account_levels
-    from gnucash_reports.reports.budget_level import budget_level, budget_planning, category_budget_level
+    from gnucash_reports.reports.budget_level import budget_level, budget_planning
     from gnucash_reports.reports.investment_balance import investment_balance, investment_trend, investment_allocation
     from gnucash_reports.reports.income_tax import income_tax
     from gnucash_reports.reports.retirement_401k import retirement_401k_report
     from gnucash_reports.reports.expenses_monthly import expenses_period, expenses_box, expenses_categories, \
         expense_accounts
     from gnucash_reports.reports.cash_flow import cash_flow
-    from gnucash_reports.reports.credit.credit_usage import credit_usage, debt_vs_liquid_assets
+    from gnucash_reports.reports.credit_usage import credit_usage, debt_vs_liquid_assets
     from gnucash_reports.reports.net_worth import net_worth, net_worth_table
     from gnucash_reports.reports.account_usage_categories import account_usage_categories
     from gnucash_reports.reports.income_expenses import income_vs_expense
@@ -22,11 +22,9 @@ def register_core_reports():
     from gnucash_reports.reports.base import register_plugin, multi_report
 
     register_plugin(savings_goal)
-    register_plugin(savings_goal_trend)
     register_plugin(account_levels)
     register_plugin(budget_level)
     register_plugin(budget_planning)
-    register_plugin(category_budget_level)
     register_plugin(investment_balance)
     register_plugin(investment_trend)
     register_plugin(investment_allocation)

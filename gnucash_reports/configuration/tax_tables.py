@@ -1,13 +1,17 @@
 """
-Attempt to determine federal tax information.
+Attempt to determine tax information.
 """
 from decimal import Decimal
 
 _tax_tables = dict()
 
 
-def configure_tax_tables(json_configuration):
-    tax_tables = json_configuration.get('taxes')
+def configure_tax_tables(configuration):
+    """
+    Configure the tax tables from the configuration object provided.
+    :param configuration:
+    """
+    tax_tables = configuration.get('taxes')
 
     # Federal/State Level
     for key, value in tax_tables.iteritems():
@@ -58,9 +62,3 @@ def calculate_tax(table_name, table_type, value):
     current_tax = current_tax.to_integral_value('ROUND_HALF_UP')
 
     return current_tax
-
-
-if __name__ == '__main__':
-    assert(calculate_tax('single', Decimal('8225.0')) == Decimal('823.0'))
-    assert(calculate_tax('single', Decimal('100000.0')) == Decimal('21071.0'))
-    assert(calculate_tax('single', Decimal('500000.0')) == Decimal('154369.0'))
