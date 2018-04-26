@@ -85,7 +85,7 @@ def get_account(account_name):
     return current_account
 
 
-def get_splits(account, start_date, end_date=None, credit=True, debit=True):
+def get_splits(account, start_date=None, end_date=None, credit=True, debit=True):
     """
     Return all of the splits associated with the account.
     :param account: account object
@@ -97,19 +97,21 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
     """
     # TODO: Allow start_date to be none and will not filter based on start date values.
     # Sanitize values
-    if hasattr(start_date, 'date'):
-        start_date = start_date.date()
+    if start_date is not None:
+        if hasattr(start_date, 'date'):
+            start_date = start_date.date()
 
     if not end_date:
         end_date = get_today()
     elif hasattr(end_date, 'date'):
         end_date = end_date.date()
 
-    result = []
-
     filters = [piecash.Split.account == account,
-               piecash.Transaction.post_date >= start_date,
                piecash.Transaction.post_date <= end_date]
+
+    # If start_date is not defined, then don't use that value to filter dates
+    if start_date:
+        filters.append(piecash.Transaction.post_date >= start_date)
 
     # Filter out the credit and debits at the database level instead of in this script
     if credit and not debit:
@@ -124,10 +126,7 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
     split_query = _book.session.query(piecash.Split).join(piecash.Transaction).filter(*filters)
     split_query = split_query.order_by(piecash.Transaction._post_date)
 
-    for split in split_query:
-        result.append(split)
-
-    return result
+    return split_query.all()
 
 
 def account_walker(accounts, ignores=None, place_holders=False, recursive=True, **kwargs):
@@ -225,12 +224,7 @@ def get_balance_on_date(account, date_value=get_today(), currency=None):
     if hasattr(date_value, 'date'):
         date_value = date_value.date()
 
-    # TODO: Can this be re-written to use the splits from the get_splits method?
-
-    splits = _book.session.query(piecash.Split).filter(
-        piecash.Split.account == account,
-        piecash.Split.transaction.has(piecash.Transaction.post_date <= date_value)
-    ).all()
+    splits = get_splits(account, end_date=date_value)
 
     if splits:
         balance_decimal = sum([s.quantity for s in splits])
