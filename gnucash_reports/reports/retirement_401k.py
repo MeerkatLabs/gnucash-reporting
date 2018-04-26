@@ -2,7 +2,7 @@
 This report needs to go through all of the income transactions and look for credits that are made to the 401k of the
 owner.
 """
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 from gnucash_reports.periods import PeriodStart, PeriodEnd
@@ -41,7 +41,7 @@ def retirement_401k_report(income=None, retirement=None, start=PeriodStart.this_
     contribution_total = Decimal('0.0')
 
     today = current_date.get_today()
-    beginning_of_year = datetime(today.year, 1, 1, 0, 0, 0)
+    beginning_of_year = date(today.year, 1, 1)
 
     retirement_accounts = [clean_account_name(account_name.fullname)
                            for account_name in account_walker(**retirement_account_params)]
@@ -59,8 +59,8 @@ def retirement_401k_report(income=None, retirement=None, start=PeriodStart.this_
                     contribution_total += income_split.value
 
     return {'contributionLimit': contribution_limit, 'contribution': contribution_total,
-            'dayOfYear': (today - beginning_of_year).days + 1,
-            'daysInYear': (datetime(today.year, 12, 31, 0, 0, 0) - beginning_of_year).days + 1}
+            'dayOfYear': today.timetuple().tm_yday,
+            'daysInYear': date(today.year, 12, 31).timetuple().tm_yday}
 
 
 # Have to change the report_type of this to match what it is called in the viewer.

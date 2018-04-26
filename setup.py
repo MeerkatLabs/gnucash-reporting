@@ -5,13 +5,13 @@ from codecs import open
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 
 setup(
     name='gnucash-reports',
-    version='0.2.0',
+    version='0.2.1',
     packages=find_packages(),
     url='https://github.com/MeerkatLabs/gnucash-reports',
     license='MIT',
@@ -19,16 +19,15 @@ setup(
     author_email='rerobins@meerkatlabs.org',
     description='Generate JSON reports for rendering in a viewer.',
     long_description=long_description,
-    long_description_content_type='text/markdown',
     install_requires=['dateutils==0.6.6',
-                      'simplejson==3.8.0',
-                      'pyaml==15.8.2',
-                      'piecash==0.13.0',
+                      'simplejson==3.14.0',
+                      'pyaml==17.12.1',
+                      'piecash==0.18.0',
                       'enum34==1.1.6',
                       'requests==2.18.4'
                       ],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 3 - Beta',
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
         'Operating System :: POSIX :: Linux',

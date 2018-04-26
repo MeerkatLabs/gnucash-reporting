@@ -26,7 +26,7 @@ class PeriodStart(Enum):
         today = get_today()
 
         if self == PeriodStart.today:
-            return today.date()
+            return today
         elif self == PeriodStart.this_month or self == PeriodStart.previous_month:
             this_month = date(today.year, today.month, 1)
             if self == PeriodStart.this_month:
@@ -73,7 +73,7 @@ class PeriodEnd(Enum):
         today = get_today()
 
         if self == PeriodEnd.today:
-            return today.date()
+            return today
         elif self == PeriodEnd.this_month or self == PeriodEnd.previous_month:
             this_month = date(today.year, today.month, 1)
             if self == PeriodEnd.this_month:

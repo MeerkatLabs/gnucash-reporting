@@ -62,7 +62,7 @@ def budget_level(accounts=None, budget_value='0.0', year_to_date=True):
         today = PeriodStart.today.date
         data_payload.update({
             'yearlyBalance': yearly_balance,
-            'daysInYear': (date(today.year+1, 1, 1) - date(today.year, 1, 1)).days,
+            'daysInYear': date(today.year, 12, 31).timetuple().tm_yday,
             'currentYearDay': today.timetuple().tm_yday
         })
 

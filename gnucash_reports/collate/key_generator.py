@@ -1,5 +1,6 @@
 import re
 from dateutil.rrule import rrule, MONTHLY
+from datetime import datetime
 
 from gnucash_reports.configuration.expense_categories import get_category_for_account
 from gnucash_reports.utilities import clean_account_name
@@ -19,7 +20,7 @@ def period(start, end, frequency=MONTHLY, interval=1):
     intervals = rrule(frequency, start, interval=interval, until=end)
 
     def method(data_key):
-        split_date = data_key.transaction.post_date.replace(tzinfo=None, microsecond=0)
+        split_date = datetime.combine(data_key.transaction.post_date, datetime.max.time())
         return intervals.before(split_date, inc=True).date()
 
     return method

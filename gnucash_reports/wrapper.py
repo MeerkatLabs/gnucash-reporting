@@ -95,21 +95,21 @@ def get_splits(account, start_date, end_date=None, credit=True, debit=True):
     :param debit: should debit splits be returned
     :return: list of the splits
     """
+    # TODO: Allow start_date to be none and will not filter based on start date values.
+    # Sanitize values
+    if hasattr(start_date, 'date'):
+        start_date = start_date.date()
 
-    start_time = datetime.combine(start_date, datetime.min.time())
     if not end_date:
         end_date = get_today()
-
-    end_time = datetime.combine(end_date, datetime.max.time())
-
-    start_time = start_time.replace(microsecond=0, tzinfo=None)
-    end_time = end_time.replace(microsecond=0, tzinfo=None)
+    elif hasattr(end_date, 'date'):
+        end_date = end_date.date()
 
     result = []
 
     filters = [piecash.Split.account == account,
-               piecash.Transaction.post_date >= start_time,
-               piecash.Transaction.post_date <= end_time]
+               piecash.Transaction.post_date >= start_date,
+               piecash.Transaction.post_date <= end_date]
 
     # Filter out the credit and debits at the database level instead of in this script
     if credit and not debit:
@@ -221,11 +221,15 @@ def get_balance_on_date(account, date_value=get_today(), currency=None):
     :param currency:  the currency to calculate the value in.  If none, uses the accounts currency.
     :return: amount that the account is worth as of date.
     """
-    date_value = datetime.combine(date_value, datetime.max.time()).replace(microsecond=0, tzinfo=None)
+    # Sanitize values
+    if hasattr(date_value, 'date'):
+        date_value = date_value.date()
+
+    # TODO: Can this be re-written to use the splits from the get_splits method?
 
     splits = _book.session.query(piecash.Split).filter(
         piecash.Split.account == account,
-        piecash.Split.transaction.has(piecash.Transaction.post_date < date_value)
+        piecash.Split.transaction.has(piecash.Transaction.post_date <= date_value)
     ).all()
 
     if splits:
