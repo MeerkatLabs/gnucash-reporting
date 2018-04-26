@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='gnucash-reports',
-    version='0.2.1',
+    version='0.3.0',
     packages=find_packages(),
     url='https://github.com/MeerkatLabs/gnucash-reports',
     license='MIT',
