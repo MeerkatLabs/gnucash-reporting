@@ -46,5 +46,5 @@ def time_series_dict_to_list(dictionary, key=lambda x: time.mktime(x.timetuple()
     if value is None:
         value = identity
 
-    time_series = [[key(k), value(v)] for k, v in dictionary.iteritems()]
+    time_series = [[key(k), value(v)] for k, v in dictionary.items()]
     return sorted(time_series, key=itemgetter(0))

@@ -40,10 +40,16 @@ def get_price_information(symbol, date=None):
 
     json_data = r.json()
 
-    if date is None:
-        date_key = json_data[META_DATA_KEY][LAST_REFRESHED]
-    else:
-        date_key = date.strftime(DATE_FORMAT)
+    try:
+        if date is None:
+            date_key = json_data[META_DATA_KEY][LAST_REFRESHED]
+        else:
+            date_key = date.strftime(DATE_FORMAT)
 
-    return datetime.datetime.strptime(date_key, DATE_FORMAT).date(), \
-           json_data.get(DATA_KEY, {}).get(date_key, {}).get(CLOSE_KEY)
+        return datetime.datetime.strptime(date_key, DATE_FORMAT).date(), \
+               json_data.get(DATA_KEY, {}).get(date_key, {}).get(CLOSE_KEY)
+    except KeyError:
+        print(f'Error processing: {symbol}')
+        print(f'{json_data}')
+
+    return None, None

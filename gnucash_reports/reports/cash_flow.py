@@ -43,7 +43,7 @@ def cash_flow(accounts=None, start=PeriodStart.this_month_year_ago, end=PeriodEn
     debit_values = []
     difference_value = []
 
-    for key, value in bucket.container.iteritems():
+    for key, value in bucket.container.items():
         store_key = time.mktime(key.timetuple())
         credit_values.append((store_key, value['credit']))
         debit_values.append((store_key, value['debit']))

@@ -53,7 +53,7 @@ def income_vs_expense(income_accounts=None, expense_accounts=None, start=PeriodS
     debit_values = []
     difference_value = []
 
-    for key, value in bucket.container.iteritems():
+    for key, value in bucket.container.items():
         time_value = time.mktime(key.timetuple())
 
         # Have to switch the signs so that the graph will make sense.  In GNUCash the income accounts are debited

@@ -57,18 +57,18 @@ def net_worth(assets=None, liabilities=None, start=PeriodStart.this_month_year_a
 
     # Calculate the asset balances
     for account in account_walker(**assets):
-        for key, value in asset_bucket.container.iteritems():
+        for key, value in asset_bucket.container.items():
             balance = get_balance_on_date(account, key, currency)
             asset_bucket.container[key] += balance
 
     # Calculate the liability balances
     for account in account_walker(**liabilities):
-        for key, value in liability_bucket.container.iteritems():
+        for key, value in liability_bucket.container.items():
             balance = get_balance_on_date(account, key, currency)
             liability_bucket.container[key] += balance
 
     # Now calculate the net values from the difference.
-    for key, value in liability_bucket.container.iteritems():
+    for key, value in liability_bucket.container.items():
         net_bucket.container[key] = asset_bucket.container[key] + liability_bucket.container[key]
 
     assets = time_series_dict_to_list(asset_bucket.container)

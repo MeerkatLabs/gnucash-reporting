@@ -14,11 +14,11 @@ def configure_tax_tables(configuration):
     tax_tables = configuration.get('taxes')
 
     # Federal/State Level
-    for key, value in tax_tables.iteritems():
+    for key, value in tax_tables.items():
 
         tax_table = dict()
         # Single Married/etc.
-        for table_key, table in value.iteritems():
+        for table_key, table in value.items():
 
             brackets = []
             for bracket in table:

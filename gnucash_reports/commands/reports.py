@@ -65,7 +65,7 @@ def main():
 
     for infile in sorted(reports_list):
 
-        print 'Processing: %s' % infile
+        print(f'Processing: {infile}')
         with open(infile) as report_configuration_file:
             report_configuration = load(report_configuration_file, Loader=Loader)
 

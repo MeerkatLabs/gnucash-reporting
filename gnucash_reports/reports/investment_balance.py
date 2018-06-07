@@ -145,7 +145,7 @@ def store_investment(bucket, value):
     elif account_type == AccountTypes.expense:
         bucket['expense'] += value.value
     else:
-        print 'Unknown account type: %s' % account_type
+        print(f'Unknown account type: {account_type}')
 
     return bucket
 
@@ -241,8 +241,8 @@ def investment_allocation(investment_accounts=None):
 
         results = get_asset_allocation(commodity, balance)
 
-        for key, value in results.iteritems():
+        for key, value in results.items():
             breakdown[key] = breakdown.get(key, Decimal('0.0')) + value
 
-    return dict(categories=sorted([[key.replace('_', ' ').title(), value] for key, value in breakdown.iteritems()],
+    return dict(categories=sorted([[key.replace('_', ' ').title(), value] for key, value in breakdown.items()],
                                   key=itemgetter(0)))

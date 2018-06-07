@@ -241,10 +241,10 @@ def get_balance_on_date(account, date_value=get_today(), currency=None):
                 ).order_by(piecash.Price.date.desc()).limit(1).one_or_none()
 
                 if price_value:
-                    # print date_value, account.fullname, balance_decimal, price_value.value
+                    # print(f'{date_value}, {account.fullname}, {balance_decimal}, {price_value.value}')
                     balance_decimal = balance_decimal * price_value.value
                 else:
-                    print currency, account.commodity, date_value
+                    print(f'{currency}, {account.commodity}, {date_value}')
                     raise NotImplementedError('Couldn\'t find a valid value')
     else:
         balance_decimal = Decimal(0.0)
@@ -273,7 +273,7 @@ def get_corr_account_full_name(split):
         raise RuntimeError('Couldn\'t find opposite accounts.')
 
     if len(return_value) > 1:
-        print 'return_value: ', return_value
+        print(f'return_value: {return_value}')
         raise RuntimeError('Split returned more than one correlating account')
 
     return return_value[0].fullname

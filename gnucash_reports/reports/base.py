@@ -19,7 +19,7 @@ def register_plugin(report, report_type=None):
         try:
             _reports[report.report_type] = report
         except AttributeError:
-            _reports[report.func_name] = report
+            _reports[report.__name__] = report
 
 
 def run_report(type='UNDEFINED_REPORT', name='UNTITLED_REPORT', description=None, definition=None):
@@ -45,7 +45,7 @@ def run_report(type='UNDEFINED_REPORT', name='UNTITLED_REPORT', description=None
             'data': payload
         }
 
-    print 'Could not find report by name: %s' % type
+    print(f'Could not find report by name: {type}')
     return None
 
 

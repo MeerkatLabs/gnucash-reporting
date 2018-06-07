@@ -25,7 +25,7 @@ def configure(configuration):
 
         all_accounts = set()
         for account in account_walker(**accounts):
-            # print 'loading account: %s' % account.fullname
+            # print(f'loading account: {account.fullname}')
             all_accounts.add(clean_account_name(account.fullname))
 
         for account in all_accounts:
@@ -45,7 +45,7 @@ def get_category_for_account(account_name):
     value = _reverse.get(account_name, _default_category)
 
     if value == _default_category:
-        print 'Returning: %s -> %s' % (account_name, _default_category)
+        print(f'Returning: {account_name} -> {_default_category}')
 
     return value
 

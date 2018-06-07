@@ -39,7 +39,7 @@ def expenses_period(expenses=None, start=PeriodStart.this_month_year_ago, end=Pe
 
     sorted_results = []
 
-    for key, value in bucket.container.iteritems():
+    for key, value in bucket.container.items():
         sorted_results.append((time.mktime(key.timetuple()), value))
 
     data_set = {
@@ -81,7 +81,7 @@ def expenses_box(expenses=None, start=PeriodStart.this_month_year_ago, end=Perio
 
     results = []
 
-    for key, value in bucket.container.iteritems():
+    for key, value in bucket.container.items():
         results.append(float(value))
 
     results = sorted(results)
@@ -112,7 +112,7 @@ def expenses_categories(expenses=None, start=PeriodStart.this_month, end=PeriodE
         for split in get_splits(account, start_period.date, end_period.date):
             bucket.store_value(split)
 
-    return {'categories': sorted([[key, value] for key, value in bucket.container.iteritems()], key=itemgetter(0))}
+    return {'categories': sorted([[key, value] for key, value in bucket.container.items()], key=itemgetter(0))}
 
 
 def expense_accounts(expenses=None, start=PeriodStart.this_month_year_ago, end=PeriodEnd.this_month):
@@ -137,7 +137,7 @@ def expense_accounts(expenses=None, start=PeriodStart.this_month_year_ago, end=P
         for split in get_splits(account, start_period.date, end_period.date):
             bucket.store_value(split)
 
-    return {'categories': sorted([[key, value] for key, value in bucket.container.iteritems()], key=itemgetter(0))}
+    return {'categories': sorted([[key, value] for key, value in bucket.container.items()], key=itemgetter(0))}
 
 
 # Calculating the quartiles based on:

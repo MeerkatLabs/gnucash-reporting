@@ -24,7 +24,7 @@ def main():
         session = initialize(configuration['gnucash_file'], read_only=False)
         configure_application(configuration.get('global', dict()))
 
-    # print "Value: %s" % (get_price_information('VGSTX'), )
+    # print(f"Value: {get_price_information('VGSTX')}")
 
     for commodity in session.commodities:
         if not commodity.quote_flag:
@@ -38,15 +38,14 @@ def main():
         if value is None:
             continue
 
-        print 'Setting value of: %s to %s %s for date: %s' % (commodity.mnemonic, value, currency.get_currency(),
-                                                              quote_date)
+        print(f'Setting value of: {commodity.mnemonic} to {value} {currency.get_currency()} for date: {quote_date}')
 
-        Price(currency=currency.get_currency(),
-              commodity=commodity,
-              date=datetime.combine(quote_date, datetime.max.time()),
-              value=Decimal(value),
-              source='Finance::Quote',
-              type='last')
+        # Price(currency=currency.get_currency(),
+        #       commodity=commodity,
+        #       date=quote_date,
+        #       value=Decimal(value),
+        #       source='Finance::Quote',
+        #       type='last')
 
     session.save()
 

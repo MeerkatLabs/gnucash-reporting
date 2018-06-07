@@ -39,5 +39,5 @@ def account_usage_categories(start=PeriodStart.this_month, end=PeriodEnd.this_mo
                 data_values.store_value(transaction_split)
 
     return {
-        'categories': sorted([[k, v] for k, v in data_values.container.iteritems()], key=itemgetter(0))
+        'categories': sorted([[k, v] for k, v in data_values.container.items()], key=itemgetter(0))
     }

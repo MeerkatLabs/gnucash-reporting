@@ -18,7 +18,7 @@ def configure(configuration):
 
     for allocation_definition in data:
         breakdown = {key: (Decimal(value) / decimal_100)
-                     for key, value in allocation_definition['breakdown'].iteritems()}
+                     for key, value in allocation_definition['breakdown'].items()}
         investment_allocations[allocation_definition['symbol']] = breakdown
 
 
@@ -35,9 +35,9 @@ def get_asset_allocation(ticker, amount):
     result = dict()
 
     if allocation_data is None:
-        print "Couldn't find data for ticker: %s" % ticker
+        print(f"Couldn't find data for ticker: {ticker}") % ticker
         allocation_data = dict(other=Decimal(1.0))
 
-    for key, percentage in allocation_data.iteritems():
+    for key, percentage in allocation_data.items():
         result[key] = amount * percentage
     return result
