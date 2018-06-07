@@ -40,12 +40,12 @@ def main():
 
         print(f'Setting value of: {commodity.mnemonic} to {value} {currency.get_currency()} for date: {quote_date}')
 
-        # Price(currency=currency.get_currency(),
-        #       commodity=commodity,
-        #       date=quote_date,
-        #       value=Decimal(value),
-        #       source='Finance::Quote',
-        #       type='last')
+        Price(currency=currency.get_currency(),
+              commodity=commodity,
+              date=quote_date,
+              value=Decimal(value),
+              source='Finance::Quote',
+              type='last')
 
     session.save()
 
