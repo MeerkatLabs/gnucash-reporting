@@ -1,4 +1,5 @@
 import argparse
+import time
 from datetime import datetime
 from yaml import load, Loader
 from gnucash_reports.utilities import load_plugins
@@ -46,6 +47,8 @@ def main():
               value=Decimal(value),
               source='Finance::Quote',
               type='last')
+
+        time.sleep(1.0)
 
     session.save()
 
