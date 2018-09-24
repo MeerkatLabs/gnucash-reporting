@@ -10,6 +10,8 @@ from gnucash_reports.wrapper import initialize
 from piecash import Price
 from decimal import Decimal
 
+SLEEP_TIME = 60.0
+
 
 def main():
     load_plugins()
@@ -19,6 +21,8 @@ def main():
                         help='core configuration details of the application')
 
     args = parser.parse_args()
+
+    print('Loading Configuration')
 
     with open(args.configuration) as file_pointer:
         configuration = load(file_pointer, Loader=Loader)
@@ -36,19 +40,19 @@ def main():
 
         quote_date, value = get_price_information(commodity.mnemonic)
 
-        if value is None:
-            continue
+        if value is not None:
+            print(f'Setting value of: {commodity.mnemonic} to {value} {currency.get_currency()} for date: {quote_date}')
 
-        print(f'Setting value of: {commodity.mnemonic} to {value} {currency.get_currency()} for date: {quote_date}')
+            Price(currency=currency.get_currency(),
+                  commodity=commodity,
+                  date=quote_date,
+                  value=Decimal(value),
+                  source='Finance::Quote',
+                  type='last')
 
-        Price(currency=currency.get_currency(),
-              commodity=commodity,
-              date=quote_date,
-              value=Decimal(value),
-              source='Finance::Quote',
-              type='last')
+        print(f'Sleeping for: {SLEEP_TIME}')
 
-        time.sleep(1.0)
+        time.sleep(SLEEP_TIME)
 
     session.save()
 

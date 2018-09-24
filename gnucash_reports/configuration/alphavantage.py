@@ -40,9 +40,14 @@ def get_price_information(symbol, date=None):
 
     json_data = r.json()
 
+    # print('JSON Data:')
+    # print(f'{json_data}')
+    # exit(-1)
+
     try:
         if date is None:
-            date_key = json_data[META_DATA_KEY][LAST_REFRESHED]
+            date_keys = sorted(json_data[DATA_KEY])
+            date_key = date_keys[-1]
         else:
             date_key = date.strftime(DATE_FORMAT)
 
