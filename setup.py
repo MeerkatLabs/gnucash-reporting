@@ -24,7 +24,7 @@ setup(
                       'pyaml==17.12.1',
                       'piecash==0.18.0',
                       'enum34==1.1.6',
-                      'requests==2.18.4'
+                      'requests==2.20.0'
                       ],
     classifiers=[
         'Development Status :: 3 - Beta',
